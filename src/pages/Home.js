@@ -1,27 +1,28 @@
 // src/pages/Home.js
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
-function Home() {
+const Home = () => {
   const navigate = useNavigate();
 
-  const createRoom = () => {
-    const roomId = uuidv4().slice(0, 8);
+  const handleCreateRoom = () => {
+    const roomId = uuidv4().split('-')[0];
     navigate(`/chat/${roomId}`);
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-pink-100 to-purple-200 text-center">
-      <h1 className="text-4xl font-bold mb-4 text-purple-800">❤️ Namakamu</h1>
-      <p className="text-lg mb-6 text-gray-700">A secret space for two hearts.</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
+      <h1 className="text-4xl font-bold mb-4">💬 Welcome to Namakamu</h1>
+      <p className="text-lg mb-6">Create a private chat and share the link with one person</p>
       <button
-        onClick={createRoom}
-        className="bg-rose-400 text-white px-6 py-3 rounded-full hover:bg-rose-500"
+        onClick={handleCreateRoom}
+        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
       >
-        Create a private link
+        Create a Private Link 🔐
       </button>
     </div>
   );
-}
+};
 
 export default Home;
