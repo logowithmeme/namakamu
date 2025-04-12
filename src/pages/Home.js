@@ -1,64 +1,53 @@
-import React, { useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+// src/pages/Home.js
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 const Home = () => {
-  const [roomId, setRoomId] = useState('');
-  const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
 
-  const handleCreateRoom = () => {
-    const newRoomId = uuidv4().split('-')[0];
-    setRoomId(newRoomId);
-    setCopied(false);
+  const handleGenerateRoom = () => {
+    const roomId = uuidv4().slice(0, 8);
+    navigate(`/chat/${roomId}`);
   };
 
-  const handleCopy = () => {
-    const link = `${window.location.origin}/chat/${roomId}`;
-    navigator.clipboard.writeText(link);
-    setCopied(true);
-  };
-
-  const handleJoinRoom = () => {
-    if (roomId) {
-      navigate(`/chat/${roomId}`);
+  const handleJoinRoom = (e) => {
+    e.preventDefault();
+    const input = document.getElementById('roomInput').value.trim();
+    if (input) {
+      navigate(`/chat/${input}`);
+    } else {
+      alert('Please enter a valid Room ID');
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
-      <h1 className="text-4xl font-bold mb-4">💬 Welcome to Namakamu</h1>
-      <p className="text-lg mb-6">Create a private chat and share the link with one person</p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
+      <h1 className="text-4xl font-bold mb-6">Welcome to Namakamu</h1>
 
-      <button
-        onClick={handleCreateRoom}
-        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
-      >
-        Create a Private Link 🔐
-      </button>
+      <div className="flex flex-col space-y-4">
+        <button
+          onClick={handleGenerateRoom}
+          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-xl shadow"
+        >
+          💚 Generate Room
+        </button>
 
-      {roomId && (
-        <div className="mt-6 text-center">
-          <p className="text-lg mb-2 font-medium">Room Link:</p>
-          <div className="bg-white px-4 py-2 rounded-lg border border-gray-300">
-            <code className="text-blue-600">{`${window.location.origin}/chat/${roomId}`}</code>
-          </div>
-          <div className="mt-4 flex gap-4 justify-center">
-            <button
-              onClick={handleCopy}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-            >
-              {copied ? '✅ Copied!' : '📋 Copy Link'}
-            </button>
-            <button
-              onClick={handleJoinRoom}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
-            >
-              🚪 Enter Room
-            </button>
-          </div>
-        </div>
-      )}
+        <form onSubmit={handleJoinRoom} className="flex flex-col items-center space-y-2">
+          <input
+            id="roomInput"
+            type="text"
+            placeholder="Enter Room ID"
+            className="px-4 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            type="submit"
+            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-xl shadow"
+          >
+            💙 Join Room
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
