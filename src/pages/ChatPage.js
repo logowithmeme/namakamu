@@ -1,68 +1,84 @@
+// src/pages/ChatPage.js
 import React, { useEffect, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
-import { getDatabase, ref, onValue, push } from 'firebase/database';
+import { useParams } from 'react-router-dom';
+import { getDatabase, ref, push, onValue } from 'firebase/database';
 import { db } from '../firebase';
 
 const ChatPage = () => {
-  const { id } = useParams();
-  const location = useLocation();
-  const isCreator = new URLSearchParams(location.search).get('creator') === 'true';
-
+  const { roomId } = useParams();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [isCreator, setIsCreator] = useState(false);
 
   useEffect(() => {
-    const messagesRef = ref(db, `rooms/${id}/messages`);
+    const createdFlag = sessionStorage.getItem(`created-${roomId}`);
+    setIsCreator(!!createdFlag);
+  }, [roomId]);
+
+  useEffect(() => {
+    const messagesRef = ref(db, `rooms/${roomId}/messages`);
     onValue(messagesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         setMessages(Object.values(data));
       }
     });
-  }, [id]);
+  }, [roomId]);
 
   const handleSend = () => {
-    if (!newMessage.trim()) return;
-
-    const msgData = {
+    if (newMessage.trim() === '') return;
+    const messagesRef = ref(db, `rooms/${roomId}/messages`);
+    push(messagesRef, {
       text: newMessage,
-      sender: isCreator ? 'creator' : 'receiver',
-      timestamp: new Date().toISOString(),
-    };
-
-    push(ref(db, `rooms/${id}/messages`), msgData);
+      sender: isCreator ? 'creator' : 'guest',
+      timestamp: Date.now(),
+    });
     setNewMessage('');
   };
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <h2>Chat Room: {id}</h2>
+    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+      <h2 style={{ fontSize: '24px' }}>Chat Room: <strong>{roomId}</strong></h2>
+      {isCreator && (
+        <p style={{ fontSize: '16px', marginBottom: '10px' }}>
+          🔗 Share this code with your partner to join this room: <strong>{roomId}</strong>
+        </p>
+      )}
 
-      <div>
+      <div style={{ margin: '20px 0' }}>
         {messages.map((msg, index) => (
           <div
             key={index}
             style={{
-              textAlign: msg.sender === 'creator' ? 'right' : 'left',
-              margin: '0.5rem 0',
+              display: 'flex',
+              justifyContent: msg.sender === 'creator' ? 'flex-end' : 'flex-start',
+              marginBottom: '8px'
             }}
           >
-            <span style={{ fontSize: '1.1rem' }}>
+            <div
+              style={{
+                backgroundColor: msg.sender === 'creator' ? '#d4f4dd' : '#e6f0ff',
+                padding: '10px 14px',
+                borderRadius: '20px',
+                maxWidth: '70%',
+                fontSize: '16px'
+              }}
+            >
               {msg.sender === 'creator' ? '💚' : '💙'} {msg.text}
-            </span>
+            </div>
           </div>
         ))}
       </div>
 
-      <div style={{ marginTop: '1rem' }}>
+      <div>
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type your message..."
-          style={{ padding: '0.5rem', width: '60%' }}
+          style={{ padding: '10px', width: '70%', fontSize: '16px', marginRight: '10px' }}
         />
-        <button onClick={handleSend} style={{ padding: '0.5rem' }}>Send</button>
+        <button onClick={handleSend} style={{ padding: '10px 20px', fontSize: '16px' }}>Send</button>
       </div>
     </div>
   );

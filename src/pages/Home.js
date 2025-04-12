@@ -1,46 +1,46 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 
 const Home = () => {
   const [roomId, setRoomId] = useState('');
   const navigate = useNavigate();
 
-  const handleCreateRoom = () => {
-    const id = uuidv4().split('-')[0];
-    navigate(`/chat/${id}?creator=true`);
+  const generateRoomId = () => {
+    const id = Math.random().toString(36).substr(2, 8);
+    localStorage.setItem('creator', 'true');
+    navigate(`/chat/${id}`);
   };
 
-  const handleJoinRoom = () => {
-    if (roomId.trim() !== '') {
-      navigate(`/chat/${roomId}`);
-    }
+  const joinRoom = () => {
+    if (!roomId.trim()) return;
+    localStorage.setItem('creator', 'false');
+    navigate(`/chat/${roomId.trim()}`);
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>❤️ Namakamu</h1>
+    <div style={{ padding: '20px', textAlign: 'center' }}>
+      <h1><span role="img" aria-label="heart">❤️</span> <strong>Namakamu</strong></h1>
       <p>A secret space for two hearts.</p>
 
-      <div style={{ marginTop: '1rem' }}>
-        <button onClick={handleCreateRoom}>Create Room</button>
-        <br /><br />
+      <button onClick={generateRoomId} style={{ marginTop: '10px' }}>Create Room</button>
+
+      <div style={{ marginTop: '20px' }}>
         <input
           type="text"
+          placeholder="Enter Room ID"
           value={roomId}
           onChange={(e) => setRoomId(e.target.value)}
-          placeholder="Enter Room ID"
         />
-        <button onClick={handleJoinRoom}>Join Room</button>
+        <button onClick={joinRoom}>Join Room</button>
       </div>
 
-      <div style={{ marginTop: '2rem' }}>
-        <h3>🔧 Features Coming Up</h3>
+      <div style={{ textAlign: 'left', marginTop: '40px', paddingLeft: '10%' }}>
+        <h2><span role="img" aria-label="wrench">🛠</span> <strong>Features Coming Up</strong></h2>
         <ul>
-          <li>💬 Real-time two-way chat</li>
-          <li>🖼 Upload images</li>
-          <li>🔐 Private message view by code or user ID</li>
-          <li>🌈 Beautiful Tailwind UI</li>
+          <li><span role="img" aria-label="chat">💬</span> Real-time two-way chat</li>
+          <li><span role="img" aria-label="upload">🖼</span> Upload images</li>
+          <li><span role="img" aria-label="lock">🔐</span> Private message view by code or user ID</li>
+          <li><span role="img" aria-label="rainbow">🌈</span> Beautiful Tailwind UI</li>
         </ul>
       </div>
     </div>
