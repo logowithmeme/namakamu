@@ -1,5 +1,4 @@
-// src/pages/ChatPage.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
 import {
@@ -13,9 +12,10 @@ import {
 
 const ChatPage = () => {
   const { roomId } = useParams();
-  const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const [message, setMessage] = useState('');
   const [creatorId, setCreatorId] = useState('');
+  const scrollRef = useRef();
 
   useEffect(() => {
     let creator = localStorage.getItem(`creator-${roomId}`);
@@ -35,58 +35,60 @@ const ChatPage = () => {
 
   const sendMessage = async () => {
     if (message.trim() === '') return;
-
     await addDoc(collection(db, 'rooms', roomId, 'messages'), {
       text: message,
       timestamp: serverTimestamp(),
       sender: creatorId,
     });
-
     setMessage('');
   };
 
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 py-6 px-4">
-      <div className="max-w-2xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden">
-        <div className="bg-gradient-to-r from-pink-400 to-pink-600 text-white text-xl text-center font-bold py-4">
-          💬 Namakamu Room: <span className="font-mono">{roomId}</span>
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col h-[85vh]">
+        <div className="bg-pink-200 text-pink-900 text-xl font-semibold py-4 text-center">
+          💗 Namakamu Chat Room
         </div>
 
-        <div className="h-[60vh] overflow-y-auto p-4 space-y-3">
-          {messages.map((msg, index) => {
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {messages.map((msg, idx) => {
             const isCreator = msg.sender === creatorId;
+            const align = isCreator ? 'justify-end' : 'justify-start';
+            const bubbleColor = isCreator ? 'bg-green-400' : 'bg-blue-400';
+            const heart = isCreator ? '💚' : '💙';
+
             return (
-              <div
-                key={index}
-                className={`flex ${isCreator ? 'justify-end' : 'justify-start'}`}
-              >
+              <div key={idx} className={`flex ${align}`}>
                 <div
-                  className={`max-w-xs px-4 py-2 rounded-2xl text-white text-sm shadow-md ${
-                    isCreator
-                      ? 'bg-green-400 rounded-br-none'
-                      : 'bg-blue-400 rounded-bl-none'
+                  className={`${bubbleColor} text-white px-4 py-2 rounded-2xl max-w-[70%] text-sm whitespace-pre-wrap break-words shadow-md ${
+                    isCreator ? 'rounded-br-none' : 'rounded-bl-none'
                   }`}
                 >
-                  {isCreator ? '💚 ' : '💙 '}
+                  <span className="mr-1">{heart}</span>
                   {msg.text}
                 </div>
               </div>
             );
           })}
+          <div ref={scrollRef}></div>
         </div>
 
-        <div className="p-4 border-t flex gap-2 bg-gray-50">
+        <div className="p-4 border-t flex gap-2">
           <input
             type="text"
+            placeholder="Type your message..."
+            className="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-300"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-            className="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-300"
-            placeholder="Type a message..."
           />
           <button
             onClick={sendMessage}
-            className="bg-pink-500 text-white px-5 py-2 rounded-full hover:bg-pink-600 transition"
+            className="bg-pink-400 hover:bg-pink-500 text-white px-4 py-2 rounded-full transition"
           >
             Send
           </button>
