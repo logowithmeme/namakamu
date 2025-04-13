@@ -1,101 +1,102 @@
-// src/pages/ChatPage.js
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  getDatabase,
-  ref,
-  push,
-  onValue,
-} from 'firebase/database';
-import { app } from '../firebase';
-import { v4 as uuidv4 } from 'uuid';
-
-const db = getDatabase(app);
+import { db } from '../firebase';
+import { ref, push, onChildAdded, set, get } from 'firebase/database';
 
 const ChatPage = () => {
   const { roomId } = useParams();
+  const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const [text, setText] = useState('');
   const [userId, setUserId] = useState('');
 
   useEffect(() => {
-    let localId = localStorage.getItem('userId');
-    if (!localId) {
-      localId = uuidv4();
-      localStorage.setItem('userId', localId);
+    // Generate or retrieve local user ID
+    let id = localStorage.getItem('userId');
+    if (!id) {
+      id = Math.random().toString(36).substring(2, 10);
+      localStorage.setItem('userId', id);
     }
-    setUserId(localId);
-  }, []);
+    setUserId(id);
 
-  useEffect(() => {
-    const messagesRef = ref(db, `rooms/${roomId}/messages`);
-    const unsubscribe = onValue(messagesRef, (snapshot) => {
+    // Store this user under room participants
+    const participantsRef = ref(db, `rooms/${roomId}/participants`);
+    get(participantsRef).then((snapshot) => {
       const data = snapshot.val() || {};
-      const loadedMessages = Object.entries(data).map(([id, val]) => ({
-        id,
-        ...val,
-      }));
-      setMessages(loadedMessages);
+      const existingIds = Object.values(data);
+      if (!existingIds.includes(id) && existingIds.length < 2) {
+        const newRef = push(participantsRef);
+        set(newRef, id);
+      }
     });
-    return () => unsubscribe();
+
+    // Fetch and listen to messages
+    const messagesRef = ref(db, `rooms/${roomId}/messages`);
+    onChildAdded(messagesRef, (snapshot) => {
+      setMessages((prev) => [...prev, snapshot.val()]);
+    });
   }, [roomId]);
 
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (text.trim() === '') return;
-
-    const messagesRef = ref(db, `rooms/${roomId}/messages`);
-    await push(messagesRef, {
-      userId,
-      text,
-      timestamp: new Date().toISOString(),
-    });
-
-    setText('');
+  const sendMessage = () => {
+    if (message.trim()) {
+      const messagesRef = ref(db, `rooms/${roomId}/messages`);
+      push(messagesRef, {
+        text: message,
+        senderId: userId,
+        timestamp: Date.now(),
+      });
+      setMessage('');
+    }
   };
 
-  const isCreator = messages.length > 0 && messages[0]?.userId === userId;
+  const handleKey = (e) => {
+    if (e.key === 'Enter') sendMessage();
+  };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100 p-4">
-      <h2 className="text-xl font-bold text-center mb-4">
-        Chat Room: <span className="text-blue-500">{roomId}</span>
-      </h2>
+    <div className="min-h-screen p-4 bg-pink-50">
+      <h2 className="text-2xl font-bold mb-2">💬 Chat Room: {roomId}</h2>
 
-      <div className="flex-1 overflow-y-auto space-y-2 mb-4">
-        {messages.map((msg) => {
-          const isOwn = msg.userId === userId;
-          const bubbleColor = isOwn ? 'bg-green-200' : 'bg-blue-200';
-          const align = isOwn ? 'self-end' : 'self-start';
-          const heart = isOwn ? '💚' : '💙';
+      <div className="mb-3">
+        <span className="text-sm text-gray-500">
+          Share this room ID with one person only. Private 1-to-1 room.
+        </span>
+      </div>
+
+      <div className="bg-white p-4 rounded-md shadow-md max-w-xl mx-auto h-[60vh] overflow-y-auto space-y-2 mb-4">
+        {messages.map((msg, index) => {
+          const isMe = msg.senderId === userId;
+          const heart = isMe ? '💚' : '💙';
+          const alignment = isMe ? 'text-right' : 'text-left';
+          const bubbleStyle = isMe
+            ? 'bg-green-100 text-black self-end rounded-br-none'
+            : 'bg-blue-100 text-black self-start rounded-bl-none';
 
           return (
-            <div
-              key={msg.id}
-              className={`max-w-xs px-4 py-2 rounded-lg ${bubbleColor} ${align}`}
-            >
-              <span className="text-sm">{msg.text}</span>
-              <div className="text-xs text-right mt-1">{heart}</div>
+            <div key={index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-xs px-3 py-2 rounded-lg ${bubbleStyle}`}>
+                <span className="text-sm">{msg.text} {heart}</span>
+              </div>
             </div>
           );
         })}
       </div>
 
-      <form onSubmit={handleSend} className="flex gap-2">
+      <div className="flex max-w-xl mx-auto">
         <input
           type="text"
-          className="flex-1 p-2 border rounded"
+          className="flex-1 border border-gray-400 rounded-l px-3 py-2"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKey}
           placeholder="Type your message..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
         />
         <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          onClick={sendMessage}
+          className="bg-pink-500 text-white px-4 py-2 rounded-r"
         >
           Send
         </button>
-      </form>
+      </div>
     </div>
   );
 };
