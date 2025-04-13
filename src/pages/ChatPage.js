@@ -1,102 +1,86 @@
-import React, { useEffect, useState } from 'react';
+// src/pages/ChatPage.js
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { getDatabase, ref, push, onChildAdded } from 'firebase/database';
 import { db } from '../firebase';
-import { ref, push, onChildAdded, set, get } from 'firebase/database';
+import { v4 as uuidv4 } from 'uuid';
 
 const ChatPage = () => {
   const { roomId } = useParams();
-  const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const [userId, setUserId] = useState('');
+  const [newMessage, setNewMessage] = useState('');
+  const chatEndRef = useRef(null);
+
+  const [userId] = useState(() => {
+    const stored = sessionStorage.getItem('namakamuUserId');
+    if (stored) return stored;
+    const newId = uuidv4();
+    sessionStorage.setItem('namakamuUserId', newId);
+    return newId;
+  });
 
   useEffect(() => {
-    // Generate or retrieve local user ID
-    let id = localStorage.getItem('userId');
-    if (!id) {
-      id = Math.random().toString(36).substring(2, 10);
-      localStorage.setItem('userId', id);
-    }
-    setUserId(id);
-
-    // Store this user under room participants
-    const participantsRef = ref(db, `rooms/${roomId}/participants`);
-    get(participantsRef).then((snapshot) => {
-      const data = snapshot.val() || {};
-      const existingIds = Object.values(data);
-      if (!existingIds.includes(id) && existingIds.length < 2) {
-        const newRef = push(participantsRef);
-        set(newRef, id);
-      }
-    });
-
-    // Fetch and listen to messages
     const messagesRef = ref(db, `rooms/${roomId}/messages`);
     onChildAdded(messagesRef, (snapshot) => {
       setMessages((prev) => [...prev, snapshot.val()]);
     });
   }, [roomId]);
 
-  const sendMessage = () => {
-    if (message.trim()) {
-      const messagesRef = ref(db, `rooms/${roomId}/messages`);
-      push(messagesRef, {
-        text: message,
-        senderId: userId,
-        timestamp: Date.now(),
-      });
-      setMessage('');
-    }
-  };
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-  const handleKey = (e) => {
-    if (e.key === 'Enter') sendMessage();
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+
+    const messagesRef = ref(db, `rooms/${roomId}/messages`);
+    await push(messagesRef, {
+      id: uuidv4(),
+      text: newMessage,
+      senderId: userId,
+      timestamp: Date.now(),
+    });
+    setNewMessage('');
   };
 
   return (
-    <div className="min-h-screen p-4 bg-pink-50">
-      <h2 className="text-2xl font-bold mb-2">💬 Chat Room: {roomId}</h2>
-
-      <div className="mb-3">
-        <span className="text-sm text-gray-500">
-          Share this room ID with one person only. Private 1-to-1 room.
-        </span>
-      </div>
-
-      <div className="bg-white p-4 rounded-md shadow-md max-w-xl mx-auto h-[60vh] overflow-y-auto space-y-2 mb-4">
-        {messages.map((msg, index) => {
-          const isMe = msg.senderId === userId;
-          const heart = isMe ? '💚' : '💙';
-          const alignment = isMe ? 'text-right' : 'text-left';
-          const bubbleStyle = isMe
-            ? 'bg-green-100 text-black self-end rounded-br-none'
-            : 'bg-blue-100 text-black self-start rounded-bl-none';
-
-          return (
-            <div key={index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-xs px-3 py-2 rounded-lg ${bubbleStyle}`}>
-                <span className="text-sm">{msg.text} {heart}</span>
-              </div>
+    <div className="min-h-screen bg-gray-100 p-4 flex flex-col">
+      <h1 className="text-2xl font-bold mb-4 text-center">Chat Room: {roomId}</h1>
+      <div className="flex-1 overflow-y-auto bg-white rounded-xl shadow p-4 mb-4">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`mb-2 flex ${msg.senderId === userId ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`rounded-xl px-4 py-2 max-w-xs break-words text-white text-sm shadow-lg
+                ${msg.senderId === userId ? 'bg-green-500' : 'bg-blue-500'}`}
+            >
+              <span className="inline-block mr-1">
+                {msg.senderId === userId ? '💚' : '💙'}
+              </span>
+              {msg.text}
             </div>
-          );
-        })}
+          </div>
+        ))}
+        <div ref={chatEndRef} />
       </div>
 
-      <div className="flex max-w-xl mx-auto">
+      <form onSubmit={handleSend} className="flex items-center">
         <input
-          type="text"
-          className="flex-1 border border-gray-400 rounded-l px-3 py-2"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKey}
+          className="flex-1 rounded-l-xl px-4 py-2 border border-gray-300 focus:outline-none focus:ring"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type your message..."
         />
         <button
-          onClick={sendMessage}
-          className="bg-pink-500 text-white px-4 py-2 rounded-r"
+          type="submit"
+          className="bg-blue-500 text-white px-6 py-2 rounded-r-xl hover:bg-blue-600"
         >
           Send
         </button>
-      </div>
+      </form>
     </div>
   );
 };
