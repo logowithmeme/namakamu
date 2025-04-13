@@ -1,5 +1,5 @@
-// 💖 Tailwind-style Premium Chat UI for Namakamu
-import React, { useState, useEffect } from 'react';
+// src/pages/ChatPage.js
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
 import {
@@ -9,9 +9,6 @@ import {
   serverTimestamp,
   query,
   orderBy,
-  doc,
-  getDoc,
-  setDoc
 } from 'firebase/firestore';
 
 const ChatPage = () => {
@@ -19,25 +16,17 @@ const ChatPage = () => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [creatorId, setCreatorId] = useState('');
-  const [role, setRole] = useState('');
+  const scrollRef = useRef(null);
 
   useEffect(() => {
-    const localId = localStorage.getItem(`creator-${roomId}`);
-    const id = localId || Date.now().toString();
-    if (!localId) localStorage.setItem(`creator-${roomId}`, id);
-    setCreatorId(id);
+    const localCreatorId = localStorage.getItem(`creator-${roomId}`);
+    const currentId = localCreatorId || Date.now().toString();
 
-    const roomRef = doc(db, 'rooms', roomId);
-    getDoc(roomRef).then((docSnap) => {
-      if (!docSnap.exists()) {
-        setDoc(roomRef, { creator: id });
-        setRole('creator');
-      } else {
-        const data = docSnap.data();
-        if (data.creator === id) setRole('creator');
-        else setRole('joiner');
-      }
-    });
+    if (!localCreatorId) {
+      localStorage.setItem(`creator-${roomId}`, currentId);
+    }
+
+    setCreatorId(currentId);
 
     const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -47,13 +36,19 @@ const ChatPage = () => {
     return () => unsubscribe();
   }, [roomId]);
 
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   const sendMessage = async () => {
     if (message.trim() === '') return;
+
     await addDoc(collection(db, 'rooms', roomId, 'messages'), {
       text: message,
-      timestamp: serverTimestamp(),
       sender: creatorId,
+      timestamp: serverTimestamp(),
     });
+
     setMessage('');
   };
 
@@ -63,22 +58,28 @@ const ChatPage = () => {
         <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">
           💗 Namakamu Chat Room
         </div>
+
         <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`flex ${msg.sender === creatorId ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`px-4 py-2 rounded-2xl max-w-[70%] text-white text-base shadow-md whitespace-pre-wrap break-words ${
-                  msg.sender === creatorId ? 'bg-green-400 rounded-br-none' : 'bg-blue-400 rounded-bl-none'
-                }`}
-              >
-                {msg.sender === creatorId ? '💚' : '💙'} {msg.text}
+          {messages.map((msg, index) => {
+            const isCreator = msg.sender === creatorId;
+            const align = isCreator ? 'justify-end' : 'justify-start';
+            const bgColor = isCreator ? 'bg-green-400' : 'bg-blue-400';
+            const rounded = isCreator ? 'rounded-br-none' : 'rounded-bl-none';
+            const heart = isCreator ? '💚' : '💙';
+
+            return (
+              <div key={index} className={`flex ${align}`}>
+                <div
+                  className={`px-4 py-2 max-w-[70%] text-white text-base shadow-md whitespace-pre-wrap break-words rounded-2xl ${bgColor} ${rounded}`}
+                >
+                  {heart} {msg.text}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
+          <div ref={scrollRef}></div>
         </div>
+
         <div className="p-4 border-t flex items-center gap-2">
           <input
             type="text"
