@@ -1,68 +1,59 @@
-// Home.js - Updated with Room Creation & Join Logic 💬
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
-import { v4 as uuidv4 } from 'uuid';
+// src/pages/Home.js
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { db } from "../firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { v4 as uuidv4 } from "uuid";
 
 const Home = () => {
-  const navigate = useNavigate();
-  const [joinId, setJoinId] = useState('');
+  const [roomId, setRoomId] = useState("");
   const [creating, setCreating] = useState(false);
-  const [joining, setJoining] = useState(false);
+  const navigate = useNavigate();
 
-  const handleCreateRoom = async () => {
+  const createRoom = async () => {
     setCreating(true);
-    const newRoomId = uuidv4().slice(0, 8);
-    await setDoc(doc(db, 'rooms', newRoomId), {
-      createdAt: Date.now(),
+    const id = uuidv4().slice(0, 8);
+    await setDoc(doc(db, "rooms", id), {
+      createdAt: Date.now()
     });
-    localStorage.setItem(`creator-${newRoomId}`, Date.now().toString());
-    navigate(`/chat/${newRoomId}`);
+    localStorage.setItem(`creator-${id}`, "true");
+    setCreating(false);
+    navigate(`/chat/${id}`);
   };
 
-  const handleJoinRoom = async () => {
-    if (!joinId.trim()) return;
-    setJoining(true);
-    const roomRef = doc(db, 'rooms', joinId);
-    const roomSnap = await getDoc(roomRef);
-    if (roomSnap.exists()) {
-      navigate(`/chat/${joinId}`);
-    } else {
-      alert('Room not found!');
+  const joinRoom = () => {
+    if (roomId.trim()) {
+      navigate(`/chat/${roomId.trim()}`);
     }
-    setJoining(false);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 text-center p-4">
-      <h1 className="text-4xl font-bold text-pink-800 mb-8">💗 Welcome to Namakamu</h1>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 p-4">
+      <h1 className="text-4xl font-bold mb-4 text-pink-600">💖 Namakamu</h1>
 
       <button
-        onClick={handleCreateRoom}
+        onClick={createRoom}
+        className="bg-pink-500 text-white px-6 py-2 rounded-full shadow-md mb-4 hover:bg-pink-600 transition disabled:opacity-50"
         disabled={creating}
-        className="mb-6 bg-green-400 hover:bg-green-500 text-white font-semibold px-6 py-3 rounded-full shadow-lg transition"
       >
-        {creating ? 'Creating Room...' : 'Create Room'}
+        {creating ? "Creating Room..." : "➕ Create Room"}
       </button>
 
-      <div className="mb-6 w-full max-w-xs">
+      <div className="mb-4">
         <input
           type="text"
+          value={roomId}
+          onChange={(e) => setRoomId(e.target.value)}
           placeholder="Enter Room ID"
-          value={joinId}
-          onChange={(e) => setJoinId(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-full text-center"
+          className="px-4 py-2 rounded-l-full border border-gray-300 focus:outline-none"
         />
+        <button
+          onClick={joinRoom}
+          className="bg-purple-500 text-white px-4 py-2 rounded-r-full hover:bg-purple-600 transition"
+        >
+          Join Room
+        </button>
       </div>
-
-      <button
-        onClick={handleJoinRoom}
-        disabled={joining}
-        className="bg-blue-400 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-full shadow-lg transition"
-      >
-        {joining ? 'Joining...' : 'Join Room'}
-      </button>
     </div>
   );
 };
