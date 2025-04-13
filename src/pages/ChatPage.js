@@ -1,86 +1,79 @@
-// src/pages/ChatPage.js
-import React, { useEffect, useRef, useState } from 'react';
+// 💖 Tailwind-style Premium Chat UI for Namakamu
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getDatabase, ref, push, onChildAdded } from 'firebase/database';
 import { db } from '../firebase';
-import { v4 as uuidv4 } from 'uuid';
+import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from 'firebase/firestore';
 
 const ChatPage = () => {
   const { roomId } = useParams();
+  const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const chatEndRef = useRef(null);
-
-  const [userId] = useState(() => {
-    const stored = sessionStorage.getItem('namakamuUserId');
-    if (stored) return stored;
-    const newId = uuidv4();
-    sessionStorage.setItem('namakamuUserId', newId);
-    return newId;
-  });
+  const [creatorId, setCreatorId] = useState('');
 
   useEffect(() => {
-    const messagesRef = ref(db, `rooms/${roomId}/messages`);
-    onChildAdded(messagesRef, (snapshot) => {
-      setMessages((prev) => [...prev, snapshot.val()]);
+    const creator = localStorage.getItem(`creator-${roomId}`);
+    if (!creator) {
+      localStorage.setItem(`creator-${roomId}`, Date.now().toString());
+      setCreatorId(localStorage.getItem(`creator-${roomId}`));
+    } else {
+      setCreatorId(creator);
+    }
+
+    const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMessages(snapshot.docs.map(doc => doc.data()));
     });
+
+    return () => unsubscribe();
   }, [roomId]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
-    const messagesRef = ref(db, `rooms/${roomId}/messages`);
-    await push(messagesRef, {
-      id: uuidv4(),
-      text: newMessage,
-      senderId: userId,
-      timestamp: Date.now(),
+  const sendMessage = async () => {
+    if (message.trim() === '') return;
+    await addDoc(collection(db, 'rooms', roomId, 'messages'), {
+      text: message,
+      timestamp: serverTimestamp(),
+      sender: creatorId,
     });
-    setNewMessage('');
+    setMessage('');
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 flex flex-col">
-      <h1 className="text-2xl font-bold mb-4 text-center">Chat Room: {roomId}</h1>
-      <div className="flex-1 overflow-y-auto bg-white rounded-xl shadow p-4 mb-4">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`mb-2 flex ${msg.senderId === userId ? 'justify-end' : 'justify-start'}`}
-          >
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 py-10 px-4">
+      <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
+        <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">💗 Namakamu Chat Room</div>
+        <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
+          {messages.map((msg, index) => (
             <div
-              className={`rounded-xl px-4 py-2 max-w-xs break-words text-white text-sm shadow-lg
-                ${msg.senderId === userId ? 'bg-green-500' : 'bg-blue-500'}`}
+              key={index}
+              className={`flex ${msg.sender === creatorId ? 'justify-end' : 'justify-start'}`}
             >
-              <span className="inline-block mr-1">
-                {msg.senderId === userId ? '💚' : '💙'}
-              </span>
-              {msg.text}
+              <div
+                className={`px-4 py-2 rounded-2xl max-w-[70%] text-white text-base shadow-md whitespace-pre-wrap break-words ${
+                  msg.sender === creatorId ? 'bg-green-400 rounded-br-none' : 'bg-blue-400 rounded-bl-none'
+                }`}
+              >
+                {msg.text}
+              </div>
             </div>
-          </div>
-        ))}
-        <div ref={chatEndRef} />
+          ))}
+        </div>
+        <div className="p-4 border-t flex items-center gap-2">
+          <input
+            type="text"
+            className="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-300"
+            placeholder="Type your message..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+          />
+          <button
+            onClick={sendMessage}
+            className="bg-pink-400 hover:bg-pink-500 text-white px-4 py-2 rounded-full transition"
+          >
+            Send
+          </button>
+        </div>
       </div>
-
-      <form onSubmit={handleSend} className="flex items-center">
-        <input
-          className="flex-1 rounded-l-xl px-4 py-2 border border-gray-300 focus:outline-none focus:ring"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type your message..."
-        />
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-6 py-2 rounded-r-xl hover:bg-blue-600"
-        >
-          Send
-        </button>
-      </form>
     </div>
   );
 };
