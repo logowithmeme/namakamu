@@ -1,5 +1,4 @@
-// 💖 Tailwind-style Premium Chat UI for Namakamu
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
 import {
@@ -10,6 +9,8 @@ import {
   query,
   orderBy,
   doc,
+  getDoc,
+  setDoc,
 } from 'firebase/firestore';
 
 const ChatPage = () => {
@@ -17,25 +18,36 @@ const ChatPage = () => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [creatorId, setCreatorId] = useState('');
+  const [roomExists, setRoomExists] = useState(true);
+  const chatRef = useRef(null);
 
   useEffect(() => {
-    if (!roomId) return;
+    const localId = localStorage.getItem(`creator-${roomId}`);
+    const creatorVal = localId || Date.now().toString();
 
-    const creator = localStorage.getItem(`creator-${roomId}`);
-    if (!creator) {
-      const newId = Date.now().toString();
-      localStorage.setItem(`creator-${roomId}`, newId);
-      setCreatorId(newId);
-    } else {
-      setCreatorId(creator);
+    if (!localId) {
+      localStorage.setItem(`creator-${roomId}`, creatorVal);
+      setDoc(doc(db, 'rooms', roomId), { createdAt: serverTimestamp() });
     }
 
-    const roomRef = doc(db, 'rooms', roomId);
-    const messagesRef = collection(roomRef, 'messages');
-    const q = query(messagesRef, orderBy('timestamp'));
+    setCreatorId(creatorVal);
 
+    const checkRoom = async () => {
+      const roomDoc = await getDoc(doc(db, 'rooms', roomId));
+      setRoomExists(roomDoc.exists());
+    };
+
+    checkRoom();
+
+    const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => doc.data()));
+      const msgs = snapshot.docs.map((doc) => doc.data());
+      setMessages(msgs);
+      setTimeout(() => {
+        if (chatRef.current) {
+          chatRef.current.scrollTop = chatRef.current.scrollHeight;
+        }
+      }, 100);
     });
 
     return () => unsubscribe();
@@ -43,11 +55,7 @@ const ChatPage = () => {
 
   const sendMessage = async () => {
     if (message.trim() === '') return;
-
-    const roomRef = doc(db, 'rooms', roomId);
-    const messagesRef = collection(roomRef, 'messages');
-
-    await addDoc(messagesRef, {
+    await addDoc(collection(db, 'rooms', roomId, 'messages'), {
       text: message,
       timestamp: serverTimestamp(),
       sender: creatorId,
@@ -55,23 +63,34 @@ const ChatPage = () => {
     setMessage('');
   };
 
+  if (!roomExists) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-red-100 text-red-800 text-xl font-bold">
+        🚫 Room Not Found
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 py-10 px-4">
       <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
         <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">
           💗 Namakamu Chat Room
         </div>
-        <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
-          {messages.map((msg, index) => (
+        <div ref={chatRef} className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
+          {messages.map((msg, idx) => (
             <div
-              key={index}
+              key={idx}
               className={`flex ${msg.sender === creatorId ? 'justify-end' : 'justify-start'}`}
             >
               <div
                 className={`px-4 py-2 rounded-2xl max-w-[70%] text-white text-base shadow-md whitespace-pre-wrap break-words ${
-                  msg.sender === creatorId ? 'bg-green-400 rounded-br-none' : 'bg-blue-400 rounded-bl-none'
+                  msg.sender === creatorId
+                    ? 'bg-green-400 rounded-br-none'
+                    : 'bg-blue-400 rounded-bl-none'
                 }`}
               >
+                {msg.sender === creatorId ? '💚 ' : '💙 '}
                 {msg.text}
               </div>
             </div>
