@@ -1,5 +1,5 @@
-// 💖 Namakamu ChatPage.js with Mood Toggle 💚💙 + 😇/😡
-import React, { useEffect, useState, useRef } from 'react';
+// 💬 ChatPage.js with Name, Mood Toggle, and Clean Bubbles
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
 import {
@@ -15,21 +15,25 @@ const ChatPage = () => {
   const { roomId } = useParams();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const [creatorId, setCreatorId] = useState('');
-  const [userName, setUserName] = useState(localStorage.getItem('username') || '');
-  const [mood, setMood] = useState(localStorage.getItem('mood') || '😇');
-  const chatEndRef = useRef(null);
+  const [username, setUsername] = useState('');
+  const [isAngry, setIsAngry] = useState(false);
 
   useEffect(() => {
-    const creator = localStorage.getItem(`creator-${roomId}`);
-    if (!creator) {
-      localStorage.setItem(`creator-${roomId}`, Date.now().toString());
-      setCreatorId(localStorage.getItem(`creator-${roomId}`));
+    const storedName = localStorage.getItem(`name-${roomId}`);
+    if (!storedName) {
+      const name = prompt('Enter your name to join the chat room:');
+      if (name) {
+        localStorage.setItem(`name-${roomId}`, name);
+        setUsername(name);
+      }
     } else {
-      setCreatorId(creator);
+      setUsername(storedName);
     }
 
-    const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
+    const q = query(
+      collection(db, 'rooms', roomId, 'messages'),
+      orderBy('timestamp')
+    );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map((doc) => doc.data()));
     });
@@ -37,85 +41,57 @@ const ChatPage = () => {
     return () => unsubscribe();
   }, [roomId]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
   const sendMessage = async () => {
     if (message.trim() === '') return;
     await addDoc(collection(db, 'rooms', roomId, 'messages'), {
       text: message,
-      sender: creatorId,
-      name: userName,
-      mood,
       timestamp: serverTimestamp(),
+      sender: username,
     });
     setMessage('');
   };
 
-  const toggleMood = () => {
-    const newMood = mood === '😇' ? '😡' : '😇';
-    setMood(newMood);
-    localStorage.setItem('mood', newMood);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 py-6 px-4">
-      <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
-        <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">
-          💗 Namakamu Chat Room
+    <div
+      className={`min-h-screen transition-all duration-300 px-4 py-6 ${
+        isAngry
+          ? 'bg-red-100' // Angry theme
+          : 'bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100'
+      }`}
+    >
+      <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
+        <div className="flex justify-between items-center px-4 py-3 bg-pink-200 text-pink-900 text-lg font-bold">
+          <div>💗 Namakamu Chat Room</div>
+          <label className="flex items-center gap-1 cursor-pointer">
+            <span role="img" aria-label="angry">😡</span>
+            <input
+              type="checkbox"
+              className="toggle-checkbox"
+              checked={isAngry}
+              onChange={() => setIsAngry(!isAngry)}
+            />
+          </label>
         </div>
 
-        <div className="px-4 pt-4 flex justify-between items-center">
-          <input
-            type="text"
-            className="px-3 py-1 rounded-full border border-gray-300 text-sm"
-            placeholder="Enter your name"
-            value={userName}
-            onChange={(e) => {
-              setUserName(e.target.value);
-              localStorage.setItem('username', e.target.value);
-            }}
-          />
-
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-700">Mood:</span>
-            <button
-              onClick={toggleMood}
-              className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${
-                mood === '😇' ? 'bg-green-400' : 'bg-red-400'
-              }`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-300 ${
-                  mood === '😇' ? 'translate-x-0' : 'translate-x-4'
-                }`}
-              ></div>
-            </button>
-            <span className="text-lg">{mood}</span>
-          </div>
-        </div>
-
-        <div className="px-4 py-4 h-[60vh] overflow-y-auto space-y-3">
+        <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
           {messages.map((msg, index) => (
             <div
               key={index}
-              className={`flex ${msg.sender === creatorId ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${
+                msg.sender === username ? 'justify-end' : 'justify-start'
+              }`}
             >
               <div
-                className={`px-4 py-2 rounded-2xl max-w-[75%] text-white text-sm shadow-md whitespace-pre-wrap break-words ${
-                  msg.sender === creatorId ? 'bg-green-400 rounded-br-none' : 'bg-blue-400 rounded-bl-none'
+                className={`px-4 py-2 rounded-2xl max-w-[70%] text-white text-base shadow-md whitespace-pre-wrap break-words ${
+                  msg.sender === username
+                    ? 'bg-green-500 rounded-br-none'
+                    : 'bg-blue-500 rounded-bl-none'
                 }`}
               >
-                <span className="font-semibold">
-                  {msg.sender === creatorId ? '💚' : '💙'} {msg.name || 'Anonymous'} {msg.mood || '😇'}:
-                </span>
-                <br />
-                {msg.text}
+                <strong>{msg.sender}:</strong> {msg.text}
               </div>
             </div>
           ))}
-          <div ref={chatEndRef} />
         </div>
 
         <div className="p-4 border-t flex items-center gap-2">
