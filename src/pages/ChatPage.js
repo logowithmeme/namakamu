@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+// src/pages/ChatPage.js
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
 import {
@@ -9,8 +10,7 @@ import {
   query,
   orderBy,
   doc,
-  getDoc,
-  setDoc,
+  getDoc
 } from 'firebase/firestore';
 
 const ChatPage = () => {
@@ -18,39 +18,34 @@ const ChatPage = () => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [creatorId, setCreatorId] = useState('');
+  const [loading, setLoading] = useState(true);
   const [roomExists, setRoomExists] = useState(true);
-  const chatRef = useRef(null);
 
   useEffect(() => {
-    const localId = localStorage.getItem(`creator-${roomId}`);
-    const creatorVal = localId || Date.now().toString();
-
-    if (!localId) {
-      localStorage.setItem(`creator-${roomId}`, creatorVal);
-      setDoc(doc(db, 'rooms', roomId), { createdAt: serverTimestamp() });
+    const creator = localStorage.getItem(`creator-${roomId}`);
+    if (!creator) {
+      localStorage.setItem(`creator-${roomId}`, Date.now().toString());
+      setCreatorId(localStorage.getItem(`creator-${roomId}`));
+    } else {
+      setCreatorId(creator);
     }
-
-    setCreatorId(creatorVal);
 
     const checkRoom = async () => {
       const roomDoc = await getDoc(doc(db, 'rooms', roomId));
-      setRoomExists(roomDoc.exists());
+      if (roomDoc.exists()) {
+        setRoomExists(true);
+        const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          setMessages(snapshot.docs.map(doc => doc.data()));
+        });
+        return () => unsubscribe();
+      } else {
+        setRoomExists(false);
+      }
+      setLoading(false);
     };
 
     checkRoom();
-
-    const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map((doc) => doc.data());
-      setMessages(msgs);
-      setTimeout(() => {
-        if (chatRef.current) {
-          chatRef.current.scrollTop = chatRef.current.scrollHeight;
-        }
-      }, 100);
-    });
-
-    return () => unsubscribe();
   }, [roomId]);
 
   const sendMessage = async () => {
@@ -63,10 +58,18 @@ const ChatPage = () => {
     setMessage('');
   };
 
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center text-xl text-gray-600">
+        ⏳ Loading Chat Room...
+      </div>
+    );
+  }
+
   if (!roomExists) {
     return (
-      <div className="flex h-screen items-center justify-center bg-red-100 text-red-800 text-xl font-bold">
-        🚫 Room Not Found
+      <div className="h-screen flex items-center justify-center text-xl text-red-500">
+        ❌ Room Not Found
       </div>
     );
   }
@@ -77,10 +80,10 @@ const ChatPage = () => {
         <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">
           💗 Namakamu Chat Room
         </div>
-        <div ref={chatRef} className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
-          {messages.map((msg, idx) => (
+        <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
+          {messages.map((msg, index) => (
             <div
-              key={idx}
+              key={index}
               className={`flex ${msg.sender === creatorId ? 'justify-end' : 'justify-start'}`}
             >
               <div
@@ -90,7 +93,6 @@ const ChatPage = () => {
                     : 'bg-blue-400 rounded-bl-none'
                 }`}
               >
-                {msg.sender === creatorId ? '💚 ' : '💙 '}
                 {msg.text}
               </div>
             </div>
