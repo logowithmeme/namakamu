@@ -1,15 +1,17 @@
 // src/firebase.js
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_BUCKET",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAUwfgzFm67GdSVF-oX-Dl3L8s4Oy2Jucc",
+  authDomain: "namakamu-1806.firebaseapp.com",
+  projectId: "namakamu-1806",
+  storageBucket: "namakamu-1806.firebasestorage.app",
+  messagingSenderId: "552324677336",
+  appId: "1:552324677336:web:554800d26102754ce561ad"
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+const db = getFirestore(app);
+
+export { app, db };
