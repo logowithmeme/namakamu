@@ -1,7 +1,5 @@
-// ✅ NEW FEATURE: Partner name prompt & named chat bubbles
-// This update leaves original logic untouched and adds on top of existing flow
-
-import React, { useState, useEffect } from 'react';
+// 💖 Namakamu ChatPage.js with Mood Toggle 💚💙 + 😇/😡
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
 import {
@@ -13,77 +11,111 @@ import {
   orderBy,
 } from 'firebase/firestore';
 
-const ChatPageWithName = () => {
+const ChatPage = () => {
   const { roomId } = useParams();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [creatorId, setCreatorId] = useState('');
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(localStorage.getItem('username') || '');
+  const [mood, setMood] = useState(localStorage.getItem('mood') || '😇');
+  const chatEndRef = useRef(null);
 
   useEffect(() => {
-    // Set local unique ID per room
-    let creator = localStorage.getItem(`creator-${roomId}`);
+    const creator = localStorage.getItem(`creator-${roomId}`);
     if (!creator) {
-      creator = Date.now().toString();
-      localStorage.setItem(`creator-${roomId}`, creator);
-    }
-    setCreatorId(creator);
-
-    // Ask for name if not saved already
-    const savedName = localStorage.getItem(`name-${roomId}`);
-    if (!savedName) {
-      const name = prompt('Enter your name for this chat:');
-      if (name) {
-        localStorage.setItem(`name-${roomId}`, name);
-        setUserName(name);
-      }
+      localStorage.setItem(`creator-${roomId}`, Date.now().toString());
+      setCreatorId(localStorage.getItem(`creator-${roomId}`));
     } else {
-      setUserName(savedName);
+      setCreatorId(creator);
     }
 
     const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map((doc) => doc.data()));
     });
+
     return () => unsubscribe();
   }, [roomId]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const sendMessage = async () => {
     if (message.trim() === '') return;
     await addDoc(collection(db, 'rooms', roomId, 'messages'), {
       text: message,
-      timestamp: serverTimestamp(),
       sender: creatorId,
       name: userName,
+      mood,
+      timestamp: serverTimestamp(),
     });
     setMessage('');
   };
 
+  const toggleMood = () => {
+    const newMood = mood === '😇' ? '😡' : '😇';
+    setMood(newMood);
+    localStorage.setItem('mood', newMood);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 py-10 px-4">
-      <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 py-6 px-4">
+      <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
         <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">
-          💗 Namakamu Chat Room — <span className="italic">{userName}</span>
+          💗 Namakamu Chat Room
         </div>
 
-        <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
-          {messages.map((msg, index) => {
-            const isMe = msg.sender === creatorId;
-            return (
-              <div key={index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`px-4 py-2 rounded-2xl max-w-[70%] text-white text-base shadow-md whitespace-pre-wrap break-words ${
-                    isMe ? 'bg-green-400 rounded-br-none' : 'bg-blue-400 rounded-bl-none'
-                  }`}
-                >
-                  <div className="text-sm font-bold">
-                    {isMe ? `💚 ${msg.name || 'You'}` : `💙 ${msg.name || 'Partner'}`}
-                  </div>
-                  <div>{msg.text}</div>
-                </div>
+        <div className="px-4 pt-4 flex justify-between items-center">
+          <input
+            type="text"
+            className="px-3 py-1 rounded-full border border-gray-300 text-sm"
+            placeholder="Enter your name"
+            value={userName}
+            onChange={(e) => {
+              setUserName(e.target.value);
+              localStorage.setItem('username', e.target.value);
+            }}
+          />
+
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">Mood:</span>
+            <button
+              onClick={toggleMood}
+              className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${
+                mood === '😇' ? 'bg-green-400' : 'bg-red-400'
+              }`}
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-300 ${
+                  mood === '😇' ? 'translate-x-0' : 'translate-x-4'
+                }`}
+              ></div>
+            </button>
+            <span className="text-lg">{mood}</span>
+          </div>
+        </div>
+
+        <div className="px-4 py-4 h-[60vh] overflow-y-auto space-y-3">
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`flex ${msg.sender === creatorId ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`px-4 py-2 rounded-2xl max-w-[75%] text-white text-sm shadow-md whitespace-pre-wrap break-words ${
+                  msg.sender === creatorId ? 'bg-green-400 rounded-br-none' : 'bg-blue-400 rounded-bl-none'
+                }`}
+              >
+                <span className="font-semibold">
+                  {msg.sender === creatorId ? '💚' : '💙'} {msg.name || 'Anonymous'} {msg.mood || '😇'}:
+                </span>
+                <br />
+                {msg.text}
               </div>
-            );
-          })}
+            </div>
+          ))}
+          <div ref={chatEndRef} />
         </div>
 
         <div className="p-4 border-t flex items-center gap-2">
@@ -107,4 +139,4 @@ const ChatPageWithName = () => {
   );
 };
 
-export default ChatPageWithName;
+export default ChatPage;
