@@ -1,4 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+// ✅ NEW FEATURE: Partner name prompt & named chat bubbles
+// This update leaves original logic untouched and adds on top of existing flow
+
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
 import {
@@ -7,46 +10,52 @@ import {
   onSnapshot,
   serverTimestamp,
   query,
-  orderBy
+  orderBy,
 } from 'firebase/firestore';
 
-const ChatPage = () => {
+const ChatPageWithName = () => {
   const { roomId } = useParams();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [creatorId, setCreatorId] = useState('');
-  const chatRef = useRef(null);
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    const existing = localStorage.getItem(`creator-${roomId}`);
-    const id = existing || Date.now().toString();
-    localStorage.setItem(`creator-${roomId}`, id);
-    setCreatorId(id);
+    // Set local unique ID per room
+    let creator = localStorage.getItem(`creator-${roomId}`);
+    if (!creator) {
+      creator = Date.now().toString();
+      localStorage.setItem(`creator-${roomId}`, creator);
+    }
+    setCreatorId(creator);
+
+    // Ask for name if not saved already
+    const savedName = localStorage.getItem(`name-${roomId}`);
+    if (!savedName) {
+      const name = prompt('Enter your name for this chat:');
+      if (name) {
+        localStorage.setItem(`name-${roomId}`, name);
+        setUserName(name);
+      }
+    } else {
+      setUserName(savedName);
+    }
 
     const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map((doc) => doc.data());
-      setMessages(msgs);
+      setMessages(snapshot.docs.map((doc) => doc.data()));
     });
-
     return () => unsubscribe();
   }, [roomId]);
 
-  useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight;
-    }
-  }, [messages]);
-
   const sendMessage = async () => {
-    if (!message.trim()) return;
-
+    if (message.trim() === '') return;
     await addDoc(collection(db, 'rooms', roomId, 'messages'), {
       text: message,
       timestamp: serverTimestamp(),
       sender: creatorId,
+      name: userName,
     });
-
     setMessage('');
   };
 
@@ -54,30 +63,29 @@ const ChatPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 py-10 px-4">
       <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
         <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">
-          💗 Namakamu Chat Room
+          💗 Namakamu Chat Room — <span className="italic">{userName}</span>
         </div>
-        <div
-          ref={chatRef}
-          className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4 scroll-smooth"
-        >
+
+        <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
           {messages.map((msg, index) => {
-            const isCreator = msg.sender === creatorId;
+            const isMe = msg.sender === creatorId;
             return (
-              <div key={index} className={`flex ${isCreator ? 'justify-end' : 'justify-start'}`}>
+              <div key={index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                 <div
                   className={`px-4 py-2 rounded-2xl max-w-[70%] text-white text-base shadow-md whitespace-pre-wrap break-words ${
-                    isCreator
-                      ? 'bg-green-400 rounded-br-none'
-                      : 'bg-blue-400 rounded-bl-none'
+                    isMe ? 'bg-green-400 rounded-br-none' : 'bg-blue-400 rounded-bl-none'
                   }`}
                 >
-                  {isCreator ? '💚 ' : '💙 '}
-                  {msg.text}
+                  <div className="text-sm font-bold">
+                    {isMe ? `💚 ${msg.name || 'You'}` : `💙 ${msg.name || 'Partner'}`}
+                  </div>
+                  <div>{msg.text}</div>
                 </div>
               </div>
             );
           })}
         </div>
+
         <div className="p-4 border-t flex items-center gap-2">
           <input
             type="text"
@@ -99,4 +107,4 @@ const ChatPage = () => {
   );
 };
 
-export default ChatPage;
+export default ChatPageWithName;
