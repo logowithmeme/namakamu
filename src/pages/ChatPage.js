@@ -1,5 +1,4 @@
-// src/pages/ChatPage.js
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
 import {
@@ -8,9 +7,7 @@ import {
   onSnapshot,
   serverTimestamp,
   query,
-  orderBy,
-  doc,
-  getDoc
+  orderBy
 } from 'firebase/firestore';
 
 const ChatPage = () => {
@@ -18,61 +15,40 @@ const ChatPage = () => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [creatorId, setCreatorId] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [roomExists, setRoomExists] = useState(true);
+  const chatRef = useRef(null);
 
   useEffect(() => {
-    const creator = localStorage.getItem(`creator-${roomId}`);
-    if (!creator) {
-      localStorage.setItem(`creator-${roomId}`, Date.now().toString());
-      setCreatorId(localStorage.getItem(`creator-${roomId}`));
-    } else {
-      setCreatorId(creator);
-    }
+    const existing = localStorage.getItem(`creator-${roomId}`);
+    const id = existing || Date.now().toString();
+    localStorage.setItem(`creator-${roomId}`, id);
+    setCreatorId(id);
 
-    const checkRoom = async () => {
-      const roomDoc = await getDoc(doc(db, 'rooms', roomId));
-      if (roomDoc.exists()) {
-        setRoomExists(true);
-        const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-          setMessages(snapshot.docs.map(doc => doc.data()));
-        });
-        return () => unsubscribe();
-      } else {
-        setRoomExists(false);
-      }
-      setLoading(false);
-    };
+    const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs.map((doc) => doc.data());
+      setMessages(msgs);
+    });
 
-    checkRoom();
+    return () => unsubscribe();
   }, [roomId]);
 
+  useEffect(() => {
+    if (chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   const sendMessage = async () => {
-    if (message.trim() === '') return;
+    if (!message.trim()) return;
+
     await addDoc(collection(db, 'rooms', roomId, 'messages'), {
       text: message,
       timestamp: serverTimestamp(),
       sender: creatorId,
     });
+
     setMessage('');
   };
-
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center text-xl text-gray-600">
-        ⏳ Loading Chat Room...
-      </div>
-    );
-  }
-
-  if (!roomExists) {
-    return (
-      <div className="h-screen flex items-center justify-center text-xl text-red-500">
-        ❌ Room Not Found
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 py-10 px-4">
@@ -80,23 +56,27 @@ const ChatPage = () => {
         <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">
           💗 Namakamu Chat Room
         </div>
-        <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`flex ${msg.sender === creatorId ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`px-4 py-2 rounded-2xl max-w-[70%] text-white text-base shadow-md whitespace-pre-wrap break-words ${
-                  msg.sender === creatorId
-                    ? 'bg-green-400 rounded-br-none'
-                    : 'bg-blue-400 rounded-bl-none'
-                }`}
-              >
-                {msg.text}
+        <div
+          ref={chatRef}
+          className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4 scroll-smooth"
+        >
+          {messages.map((msg, index) => {
+            const isCreator = msg.sender === creatorId;
+            return (
+              <div key={index} className={`flex ${isCreator ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`px-4 py-2 rounded-2xl max-w-[70%] text-white text-base shadow-md whitespace-pre-wrap break-words ${
+                    isCreator
+                      ? 'bg-green-400 rounded-br-none'
+                      : 'bg-blue-400 rounded-bl-none'
+                  }`}
+                >
+                  {isCreator ? '💚 ' : '💙 '}
+                  {msg.text}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="p-4 border-t flex items-center gap-2">
           <input
