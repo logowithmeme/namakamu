@@ -1,44 +1,54 @@
-// src/pages/ChatPage.js
-import React, { useEffect, useState } from 'react';
+// 💖 Tailwind-style Premium Chat UI for Namakamu
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
 import {
   collection,
   addDoc,
   onSnapshot,
+  serverTimestamp,
   query,
   orderBy,
-  serverTimestamp,
+  doc,
+  getDoc,
+  setDoc
 } from 'firebase/firestore';
 
 const ChatPage = () => {
   const { roomId } = useParams();
-  const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
   const [creatorId, setCreatorId] = useState('');
+  const [role, setRole] = useState('');
 
   useEffect(() => {
-    const storedId = localStorage.getItem(`creator-${roomId}`);
-    if (!storedId) {
-      const id = Date.now().toString();
-      localStorage.setItem(`creator-${roomId}`, id);
-      setCreatorId(id);
-    } else {
-      setCreatorId(storedId);
-    }
+    const localId = localStorage.getItem(`creator-${roomId}`);
+    const id = localId || Date.now().toString();
+    if (!localId) localStorage.setItem(`creator-${roomId}`, id);
+    setCreatorId(id);
 
-    const q = query(
-      collection(db, 'rooms', roomId, 'messages'),
-      orderBy('timestamp')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map((doc) => doc.data()));
+    const roomRef = doc(db, 'rooms', roomId);
+    getDoc(roomRef).then((docSnap) => {
+      if (!docSnap.exists()) {
+        setDoc(roomRef, { creator: id });
+        setRole('creator');
+      } else {
+        const data = docSnap.data();
+        if (data.creator === id) setRole('creator');
+        else setRole('joiner');
+      }
     });
+
+    const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMessages(snapshot.docs.map(doc => doc.data()));
+    });
+
     return () => unsubscribe();
   }, [roomId]);
 
-  const handleSend = async () => {
-    if (!message.trim()) return;
+  const sendMessage = async () => {
+    if (message.trim() === '') return;
     await addDoc(collection(db, 'rooms', roomId, 'messages'), {
       text: message,
       timestamp: serverTimestamp(),
@@ -48,40 +58,39 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 p-4">
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div className="bg-pink-200 p-4 text-center text-xl font-semibold text-pink-800">
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 py-10 px-4">
+      <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
+        <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">
           💗 Namakamu Chat Room
         </div>
-        <div className="h-[65vh] overflow-y-auto px-4 py-2 space-y-2">
-          {messages.map((msg, i) => (
+        <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
+          {messages.map((msg, index) => (
             <div
-              key={i}
+              key={index}
               className={`flex ${msg.sender === creatorId ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] px-4 py-2 rounded-xl text-white text-sm whitespace-pre-wrap break-words shadow-md
-                ${msg.sender === creatorId ? 'bg-green-400 rounded-br-none' : 'bg-blue-400 rounded-bl-none'}`}
+                className={`px-4 py-2 rounded-2xl max-w-[70%] text-white text-base shadow-md whitespace-pre-wrap break-words ${
+                  msg.sender === creatorId ? 'bg-green-400 rounded-br-none' : 'bg-blue-400 rounded-bl-none'
+                }`}
               >
-                <span className="inline-block mr-1">
-                  {msg.sender === creatorId ? '💚' : '💙'}
-                </span>
-                {msg.text}
+                {msg.sender === creatorId ? '💚' : '💙'} {msg.text}
               </div>
             </div>
           ))}
         </div>
-        <div className="flex gap-2 border-t p-4">
+        <div className="p-4 border-t flex items-center gap-2">
           <input
-            className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-300"
+            type="text"
+            className="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-300"
+            placeholder="Type your message..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Type your message..."
+            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
           />
           <button
-            onClick={handleSend}
-            className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-full"
+            onClick={sendMessage}
+            className="bg-pink-400 hover:bg-pink-500 text-white px-4 py-2 rounded-full transition"
           >
             Send
           </button>
