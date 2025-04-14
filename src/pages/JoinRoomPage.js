@@ -1,14 +1,25 @@
 // src/pages/JoinRoomPage.js
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const JoinRoomPage = () => {
   const navigate = useNavigate();
   const { roomId } = useParams();
   const [name, setName] = useState('');
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (!name.trim()) return alert("Please enter your name!");
+
+    const ref = doc(db, 'rooms', roomId);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      alert("Invalid Room ID. Room doesn't exist.");
+      return;
+    }
+
     localStorage.setItem(`joiner-name-${roomId}`, name.trim());
     navigate(`/chat/${roomId}`);
   };
@@ -29,7 +40,7 @@ const JoinRoomPage = () => {
 
         <button
           onClick={handleJoin}
-          className="w-full bg-[#E4685D] text-white font-semibold py-3 rounded-full shadow hover:brightness-110"
+          className="w-full bg-[#FF867C] text-white font-semibold py-3 rounded-full shadow hover:brightness-110"
         >
           Join Now
         </button>
