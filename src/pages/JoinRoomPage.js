@@ -1,64 +1,39 @@
+// src/pages/JoinRoomPage.js
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const JoinRoomPage = () => {
-  const [roomId, setRoomId] = useState('');
-  const [name, setName] = useState('');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { roomId } = useParams();
+  const [name, setName] = useState('');
 
-  const handleJoin = async () => {
-    if (!roomId.trim() || !name.trim()) {
-      setError('Please enter both Room ID and your name.');
-      return;
-    }
-
-    try {
-      const roomRef = doc(db, 'chatrooms', roomId);
-      const roomSnap = await getDoc(roomRef);
-
-      if (roomSnap.exists()) {
-        localStorage.setItem(`username-${roomId}`, name);
-        navigate(`/chat/${roomId}`);
-      } else {
-        setError('Room not found. Please check the ID again.');
-      }
-    } catch (err) {
-      console.error('Join Error:', err);
-      setError('Something went wrong. Try again.');
-    }
+  const handleJoin = () => {
+    if (!name.trim()) return alert("Please enter your name!");
+    localStorage.setItem(`joiner-name-${roomId}`, name.trim());
+    navigate(`/chat/${roomId}`);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-pink-100 via-purple-100 to-yellow-100 px-4">
-      <h1 className="text-3xl font-bold text-purple-800 mb-6">Join Room</h1>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #FFE1D3, #FEECEB)' }}>
+      <div className="text-center max-w-md w-full bg-white bg-opacity-50 backdrop-blur-md p-8 rounded-2xl shadow-xl">
+        <h2 className="text-3xl font-bold text-[#3A2F2F] mb-4">Join Chat Room</h2>
+        <p className="text-[#3A2F2F] text-sm mb-6">Room ID: <span className="font-mono font-bold">{roomId}</span></p>
 
-      <input
-        type="text"
-        placeholder="Enter Room ID"
-        value={roomId}
-        onChange={(e) => setRoomId(e.target.value)}
-        className="mb-4 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none w-full max-w-xs"
-      />
+        <input
+          type="text"
+          placeholder="Enter your name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full mb-4 py-3 px-4 rounded-full border border-gray-300 text-center text-lg focus:outline-none focus:ring-2 focus:ring-[#E4685D]"
+        />
 
-      <input
-        type="text"
-        placeholder="Enter Your Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="mb-6 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none w-full max-w-xs"
-      />
-
-      {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
-
-      <button
-        onClick={handleJoin}
-        className="bg-purple-500 text-white px-6 py-2 rounded-full hover:bg-purple-600 transition shadow-lg"
-      >
-        Join Room
-      </button>
+        <button
+          onClick={handleJoin}
+          className="w-full bg-[#E4685D] text-white font-semibold py-3 rounded-full shadow hover:brightness-110"
+        >
+          Join Now
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,52 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { db } from '../firebase';
-import { doc, setDoc } from 'firebase/firestore';
-import { v4 as uuidv4 } from 'uuid';
+// src/pages/RoomCreated.js
+import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const RoomCreated = () => {
-  const [roomId, setRoomId] = useState('');
+  const { roomId } = useParams();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const generateRoom = async () => {
-      const newRoomId = uuidv4().slice(0, 8);
-      await setDoc(doc(db, 'chatrooms', newRoomId), {
-        createdAt: new Date().toISOString(),
-      });
-      setRoomId(newRoomId);
-    };
-
-    generateRoom();
-  }, []);
-
-  const handleCopy = () => {
+  const copyToClipboard = () => {
     navigator.clipboard.writeText(roomId);
-    alert('Room ID copied!');
+    alert("Room ID copied!");
   };
 
-  const handleStartChat = () => {
+  const goToChat = () => {
     navigate(`/chat/${roomId}`);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-pink-100 via-purple-100 to-yellow-100 px-4">
-      <h1 className="text-3xl font-bold text-purple-800 mb-2">Chat Room Created</h1>
-      <p className="text-lg mb-4">Room ID:</p>
-      <p className="text-4xl font-bold text-indigo-700 mb-6">{roomId}</p>
-      <p className="mb-4 text-center">Share this code with your partner to join.</p>
+    <div className="min-h-screen flex items-center justify-center px-4 text-center" style={{ background: 'linear-gradient(135deg, #FCE4EC, #F3E5F5)' }}>
+      <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full shadow-2xl">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#3A2F2F] mb-2">Chat Room Created</h1>
+        <p className="text-lg text-[#3A2F2F]">Room ID:</p>
+        <div className="text-3xl font-bold font-mono text-[#4A148C] mt-1 mb-4">{roomId}</div>
+        <p className="text-[#3A2F2F] mb-6">Share this code with your partner to join.</p>
 
-      <div className="flex flex-col gap-4 w-full max-w-xs">
         <button
-          onClick={handleCopy}
-          className="bg-white text-purple-800 py-3 rounded-full shadow-md hover:bg-purple-100 transition"
+          onClick={copyToClipboard}
+          className="w-full mb-3 bg-[#FFF7F0] text-[#3A2F2F] py-3 rounded-full font-semibold shadow border border-gray-300 hover:brightness-110"
         >
           Copy Room ID
         </button>
 
         <button
-          onClick={handleStartChat}
-          className="bg-pink-400 text-white py-3 rounded-full shadow-lg hover:bg-pink-500 transition"
+          onClick={goToChat}
+          className="w-full bg-[#E4685D] text-white py-3 rounded-full font-semibold shadow hover:brightness-110 transition"
         >
           Start Chatting
         </button>
