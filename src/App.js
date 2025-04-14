@@ -1,4 +1,3 @@
-// App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
@@ -11,8 +10,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/roomcreated" element={<RoomCreated />} />
-        <Route path="/joinroom" element={<JoinRoomPage />} />
+        <Route path="/room-created" element={<RoomCreated />} />
+        <Route path="/join-room" element={<JoinRoomPage />} />
         <Route path="/chat/:roomId" element={<ChatPage />} />
       </Routes>
     </Router>
