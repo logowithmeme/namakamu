@@ -39,13 +39,15 @@ const RoomCreated = () => {
           className="w-full text-center text-lg rounded-xl border border-[#D9D9D9] py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#D9644A] text-[#5C5C5C] bg-white"
         />
 
+        {/* VISIBLE COPY BUTTON */}
         <button
           onClick={copyToClipboard}
-          className="w-full mb-3 bg-white text-[#D9644A] border border-[#D9644A] hover:bg-[#FFE6E1] py-3 rounded-full font-semibold shadow-md transition"
+          className="w-full mb-3 bg-white text-[#D9644A] border border-[#D9644A] py-3 rounded-full font-semibold shadow-md hover:bg-[#ffeae5] transition"
         >
           Copy Room ID
         </button>
 
+        {/* VISIBLE START CHAT BUTTON */}
         <button
           onClick={handleStartChat}
           className="w-full bg-[#D9644A] hover:bg-[#c6533b] text-white py-3 rounded-full font-semibold shadow-md transition"
