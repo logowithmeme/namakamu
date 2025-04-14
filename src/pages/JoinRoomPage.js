@@ -1,46 +1,35 @@
 // src/pages/JoinRoomPage.js
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 const JoinRoomPage = () => {
-  const navigate = useNavigate();
   const { roomId } = useParams();
   const [name, setName] = useState('');
+  const navigate = useNavigate();
 
   const handleJoin = async () => {
-    if (!name.trim()) return alert("Please enter your name!");
-
-    const ref = doc(db, 'rooms', roomId);
-    const snap = await getDoc(ref);
-
-    if (!snap.exists()) {
-      alert("Invalid Room ID. Room doesn't exist.");
-      return;
-    }
-
-    localStorage.setItem(`joiner-name-${roomId}`, name.trim());
+    if (!name.trim()) return;
+    localStorage.setItem(`joiner-name-${roomId}`, name);
     navigate(`/chat/${roomId}`);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #FFE1D3, #FEECEB)' }}>
-      <div className="text-center max-w-md w-full bg-white bg-opacity-50 backdrop-blur-md p-8 rounded-2xl shadow-xl">
-        <h2 className="text-3xl font-bold text-[#3A2F2F] mb-4">Join Chat Room</h2>
-        <p className="text-[#3A2F2F] text-sm mb-6">Room ID: <span className="font-mono font-bold">{roomId}</span></p>
-
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#ffe1e8] to-[#fad0c4] p-4">
+      <div className="bg-white/60 backdrop-blur-lg p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
+        <div className="text-3xl font-bold mb-2">Join Chat Room</div>
+        <p className="text-md font-semibold mb-6">Room ID: <span className="font-mono font-bold">{roomId}</span></p>
         <input
           type="text"
+          className="w-full px-4 py-3 mb-4 rounded-full border text-center text-gray-700"
           placeholder="Enter your name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full mb-4 py-3 px-4 rounded-full border border-gray-300 text-center text-lg focus:outline-none focus:ring-2 focus:ring-[#E4685D]"
         />
-
         <button
           onClick={handleJoin}
-          className="w-full bg-[#FF867C] text-white font-semibold py-3 rounded-full shadow hover:brightness-110"
+          className="w-full bg-pink-400 hover:bg-pink-500 text-white font-semibold py-3 rounded-full shadow"
         >
           Join Now
         </button>
