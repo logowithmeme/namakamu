@@ -1,120 +1,131 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+// ChatPage.js
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import { db } from '../firebase';
 import {
-  doc,
+  collection,
+  addDoc,
   onSnapshot,
-  updateDoc,
-  arrayUnion,
+  serverTimestamp,
+  query,
+  orderBy,
+  doc,
   getDoc,
-} from "firebase/firestore";
-import { db } from "../firebase";
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore';
 
 const ChatPage = () => {
   const { roomId } = useParams();
-  const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [userName, setUserName] = useState("");
-  const [angryMode, setAngryMode] = useState(false);
+  const [showNameInput, setShowNameInput] = useState(true);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    // 👇 Only prompt once when name not already set
-    const storedName = localStorage.getItem("userName");
-    if (storedName) {
-      setUserName(storedName);
-    } else {
-      const name = prompt("Enter your name:");
-      if (!name) return navigate("/");
-      setUserName(name);
-      localStorage.setItem("userName", name);
+    if (!showNameInput) {
+      const q = query(collection(db, 'chatrooms', roomId, 'messages'), orderBy('timestamp'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        setMessages(snapshot.docs.map(doc => doc.data()));
+        scrollToBottom();
+      });
+      return () => unsubscribe();
     }
-  }, [navigate]);
+  }, [showNameInput]);
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, "rooms", roomId), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setMessages(data.messages || []);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [roomId]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const sendMessage = async () => {
-    if (!newMessage.trim()) return;
-    const messageData = {
-      text: newMessage,
-      sender: userName,
-      timestamp: new Date().toISOString(),
-    };
-
-    const roomRef = doc(db, "rooms", roomId);
-    await updateDoc(roomRef, {
-      messages: arrayUnion(messageData),
-    });
-
-    setNewMessage("");
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  return (
-    <div
-      className={`min-h-screen p-4 flex flex-col justify-between bg-gradient-to-b from-pink-100 to-purple-100 ${
-        angryMode ? "bg-red-200" : ""
-      }`}
-    >
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-2xl font-semibold text-pink-700">
-          💖 Namakamu Chat Room
-        </h2>
-        <label className="flex items-center gap-2 text-red-600">
-          <span role="img" aria-label="angry">
-            😡
-          </span>
-          Angry Mode
-          <input
-            type="checkbox"
-            checked={angryMode}
-            onChange={() => setAngryMode((prev) => !prev)}
-          />
-        </label>
-      </div>
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+    await addDoc(collection(db, 'chatrooms', roomId, 'messages'), {
+      name,
+      text: message,
+      timestamp: serverTimestamp(),
+    });
+    setMessage('');
+  };
 
-      <div className="flex-1 overflow-y-auto space-y-2">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`p-3 rounded-xl max-w-xs ${
-              msg.sender === userName
-                ? "bg-pink-200 ml-auto text-right rounded-br-none"
-                : "bg-white mr-auto text-left rounded-bl-none"
-            } shadow-md`}
+  const handleEnterChat = async () => {
+    if (!name.trim()) return;
+    const roomRef = doc(db, 'chatrooms', roomId);
+    const roomSnap = await getDoc(roomRef);
+
+    if (roomSnap.exists()) {
+      const roomData = roomSnap.data();
+      if (!roomData.creator) {
+        await updateDoc(roomRef, { creator: name });
+      } else if (!roomData.joiner && name !== roomData.creator) {
+        await updateDoc(roomRef, { joiner: name });
+      } else if (name !== roomData.creator && name !== roomData.joiner) {
+        alert('Room full or name conflict');
+        return;
+      }
+      setShowNameInput(false);
+    } else {
+      alert('Room does not exist');
+    }
+  };
+
+  if (showNameInput) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-pink-100 via-purple-100 to-yellow-100 p-4">
+        <div className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full text-center">
+          <h1 className="text-2xl font-bold text-purple-800 mb-4">Enter Your Name</h1>
+          <input
+            type="text"
+            placeholder="e.g., CG or Sravani"
+            className="w-full p-3 border border-purple-300 rounded-lg mb-4"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <button
+            onClick={handleEnterChat}
+            className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-full"
           >
-            <strong className="block text-sm text-gray-600">
-              {msg.sender}
-            </strong>
-            <span className="text-gray-800">{msg.text}</span>
+            Enter Chat Room
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-yellow-100 flex flex-col">
+      <div className="bg-purple-300 text-center py-3 text-lg font-bold text-white">
+        Room ID: {roomId}
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`flex ${msg.name === name ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`px-4 py-2 rounded-2xl max-w-[70%] text-white text-sm shadow-md whitespace-pre-wrap break-words
+                ${msg.name === name ? 'bg-green-500 rounded-br-none' : 'bg-blue-500 rounded-bl-none'}`}
+            >
+              <div className="font-semibold text-xs mb-1">{msg.name}</div>
+              {msg.text}
+            </div>
           </div>
         ))}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef}></div>
       </div>
-
-      <div className="mt-4 flex gap-2">
+      <div className="p-3 border-t flex items-center gap-2">
         <input
-          className="flex-1 p-3 rounded-full border border-gray-300 focus:outline-none"
           type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type your message..."
+          className="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-300"
+          placeholder="Type a message..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
         />
         <button
-          onClick={sendMessage}
-          className="bg-pink-500 text-white px-5 py-3 rounded-full hover:bg-pink-600"
+          onClick={handleSendMessage}
+          className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-full"
         >
           Send
         </button>
