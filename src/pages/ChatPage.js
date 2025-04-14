@@ -1,4 +1,4 @@
-// 💬 ChatPage.js with Name, Mood Toggle, and Clean Bubbles
+// 💖 Tailwind-style Premium Chat UI with Name Prompt & Mood Toggle
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
@@ -15,25 +15,28 @@ const ChatPage = () => {
   const { roomId } = useParams();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const [username, setUsername] = useState('');
-  const [isAngry, setIsAngry] = useState(false);
+  const [name, setName] = useState('');
+  const [creatorId, setCreatorId] = useState('');
+  const [mood, setMood] = useState(false); // Angry mode
 
   useEffect(() => {
-    const storedName = localStorage.getItem(`name-${roomId}`);
-    if (!storedName) {
-      const name = prompt('Enter your name to join the chat room:');
-      if (name) {
-        localStorage.setItem(`name-${roomId}`, name);
-        setUsername(name);
-      }
+    const existing = localStorage.getItem(`creator-${roomId}`);
+    const username = localStorage.getItem(`username-${roomId}`);
+    if (!username) {
+      const userNamePrompt = prompt('Enter your name:');
+      localStorage.setItem(`username-${roomId}`, userNamePrompt);
+      setName(userNamePrompt);
     } else {
-      setUsername(storedName);
+      setName(username);
+    }
+    if (!existing) {
+      localStorage.setItem(`creator-${roomId}`, Date.now().toString());
+      setCreatorId(localStorage.getItem(`creator-${roomId}`));
+    } else {
+      setCreatorId(existing);
     }
 
-    const q = query(
-      collection(db, 'rooms', roomId, 'messages'),
-      orderBy('timestamp')
-    );
+    const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map((doc) => doc.data()));
     });
@@ -46,54 +49,45 @@ const ChatPage = () => {
     await addDoc(collection(db, 'rooms', roomId, 'messages'), {
       text: message,
       timestamp: serverTimestamp(),
-      sender: username,
+      sender: creatorId,
+      name: name,
     });
     setMessage('');
   };
 
   return (
-    <div
-      className={`min-h-screen transition-all duration-300 px-4 py-6 ${
-        isAngry
-          ? 'bg-red-100' // Angry theme
-          : 'bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100'
-      }`}
-    >
+    <div className={`min-h-screen transition-colors duration-300 ${mood ? 'bg-red-200' : 'bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100'} py-10 px-4`}>
       <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
-        <div className="flex justify-between items-center px-4 py-3 bg-pink-200 text-pink-900 text-lg font-bold">
-          <div>💗 Namakamu Chat Room</div>
-          <label className="flex items-center gap-1 cursor-pointer">
-            <span role="img" aria-label="angry">😡</span>
-            <input
-              type="checkbox"
-              className="toggle-checkbox"
-              checked={isAngry}
-              onChange={() => setIsAngry(!isAngry)}
-            />
+        <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">
+          💗 Namakamu Chat Room
+        </div>
+        <div className="flex justify-end pr-4 pt-2">
+          <label className="flex items-center gap-2 text-sm font-semibold text-red-500">
+            😡 Angry Mode
+            <input type="checkbox" checked={mood} onChange={() => setMood(!mood)} />
           </label>
         </div>
-
         <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
           {messages.map((msg, index) => (
             <div
               key={index}
-              className={`flex ${
-                msg.sender === username ? 'justify-end' : 'justify-start'
-              }`}
+              className={`flex ${msg.sender === creatorId ? 'justify-end' : 'justify-start'}`}
             >
               <div
                 className={`px-4 py-2 rounded-2xl max-w-[70%] text-white text-base shadow-md whitespace-pre-wrap break-words ${
-                  msg.sender === username
-                    ? 'bg-green-500 rounded-br-none'
-                    : 'bg-blue-500 rounded-bl-none'
+                  msg.sender === creatorId
+                    ? 'bg-green-400 rounded-br-none'
+                    : 'bg-blue-400 rounded-bl-none'
                 }`}
               >
-                <strong>{msg.sender}:</strong> {msg.text}
+                <span className="block font-semibold text-sm text-white">
+                  {msg.name || 'Anonymous'}:
+                </span>
+                {msg.text}
               </div>
             </div>
           ))}
         </div>
-
         <div className="p-4 border-t flex items-center gap-2">
           <input
             type="text"

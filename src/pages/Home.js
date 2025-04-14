@@ -1,60 +1,51 @@
-// src/pages/Home.js
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
-import { v4 as uuidv4 } from 'uuid';
+import '../App.css';
 
 const Home = () => {
-  const [roomIdInput, setRoomIdInput] = useState('');
   const navigate = useNavigate();
 
-  const handleCreateRoom = async () => {
-    const roomId = uuidv4();
-    const name = prompt('Your name:');
-    if (!name) return;
-
-    localStorage.setItem(`creator-${roomId}`, name);
-
-    await addDoc(collection(db, 'rooms'), { roomId });
-    navigate(`/chat/${roomId}`);
+  const handleCreateRoom = () => {
+    // Temporarily skip creation logic
+    alert('Room Created! (UI only)');
   };
 
   const handleJoinRoom = () => {
-    if (!roomIdInput.trim()) return;
-    const name = prompt('Your name:');
-    if (!name) return;
-
-    localStorage.setItem(`joiner-${roomIdInput}`, name);
-    navigate(`/chat/${roomIdInput}`);
+    // Temporarily skip join logic
+    alert('Joining Room... (UI only)');
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 px-4">
-      <div className="text-center space-y-6 max-w-sm w-full">
-        <h1 className="text-3xl font-bold text-pink-700 mb-6">💖 Namakamu</h1>
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-orange-100 to-yellow-100 flex flex-col items-center justify-center px-4">
+      <div className="text-center mb-6">
+        <div className="text-4xl mb-2">❤️</div>
+        <h1 className="text-5xl font-bold text-gray-800 mb-2">Namakamu</h1>
+        <p className="text-lg text-gray-600">A secret space for two hearts.</p>
+      </div>
 
+      <div className="space-y-4 w-full max-w-xs">
         <button
           onClick={handleCreateRoom}
-          className="w-full py-3 rounded-xl bg-pink-500 text-white text-lg shadow-lg hover:bg-pink-600 transition"
+          className="w-full bg-rose-400 text-white text-lg py-3 rounded-full shadow-lg hover:bg-rose-500 transition"
         >
-          💡 Create Room
+          Create Room
         </button>
-
-        <input
-          type="text"
-          value={roomIdInput}
-          onChange={(e) => setRoomIdInput(e.target.value)}
-          placeholder="Enter Room ID"
-          className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-300"
-        />
 
         <button
           onClick={handleJoinRoom}
-          className="w-full py-3 rounded-xl bg-purple-500 text-white text-lg shadow-lg hover:bg-purple-600 transition"
+          className="w-full bg-orange-300 text-white text-lg py-3 rounded-full shadow-lg hover:bg-orange-400 transition"
         >
-          🚪 Join Room
+          Join Room
         </button>
+
+        <div className="mt-8">
+          <button
+            onClick={() => alert('Feature coming soon...')}
+            className="w-full bg-yellow-100 text-gray-800 py-3 rounded-full shadow-md flex items-center justify-center gap-2 hover:bg-yellow-200"
+          >
+            <span role="img" aria-label="lock">🔒</span> Shared memories
+          </button>
+        </div>
       </div>
     </div>
   );
