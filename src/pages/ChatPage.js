@@ -1,3 +1,4 @@
+// src/pages/ChatPage.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
@@ -14,20 +15,20 @@ const ChatPage = () => {
   const { roomId } = useParams();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const [creatorId, setCreatorId] = useState('');
+  const [senderId, setSenderId] = useState('');
   const [username, setUsername] = useState('');
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    const creator = localStorage.getItem(`creator-${roomId}`);
-    const joiner = localStorage.getItem(`joiner-name-${roomId}`);
+    const creatorName = localStorage.getItem(`creator-name-${roomId}`);
+    const joinerName = localStorage.getItem(`joiner-name-${roomId}`);
 
-    if (creator) {
-      setCreatorId(creator);
-      setUsername(creator);
-    } else if (joiner) {
-      setCreatorId('joiner');
-      setUsername(joiner);
+    if (creatorName) {
+      setSenderId('creator');
+      setUsername(creatorName);
+    } else if (joinerName) {
+      setSenderId('joiner');
+      setUsername(joinerName);
     }
 
     const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
@@ -43,23 +44,18 @@ const ChatPage = () => {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (message.trim() === '') return;
-
-    if (!creatorId || !username) {
-      alert("Something went wrong. Please refresh and try again.");
-      return;
-    }
+    if (!message.trim() || !senderId || !username) return;
 
     try {
       await addDoc(collection(db, 'rooms', roomId, 'messages'), {
         text: message,
         timestamp: serverTimestamp(),
-        sender: creatorId,
+        sender: senderId,
         name: username,
       });
       setMessage('');
     } catch (err) {
-      console.error("Send error:", err);
+      console.error('Send error:', err);
     }
   };
 
@@ -74,12 +70,12 @@ const ChatPage = () => {
           {messages.map((msg, index) => (
             <div
               key={index}
-              className={`flex ${msg.sender === creatorId ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${msg.sender === senderId ? 'justify-end' : 'justify-start'}`}
             >
               <div
                 className={`px-4 py-2 rounded-2xl max-w-[70%] text-black text-base shadow-md
                 whitespace-pre-wrap break-words ${
-                  msg.sender === creatorId
+                  msg.sender === senderId
                     ? 'bg-green-100 rounded-br-none'
                     : 'bg-blue-100 rounded-bl-none'
                 }`}

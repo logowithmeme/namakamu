@@ -1,4 +1,4 @@
-// src/pages/RoomCreated.js
+// RoomCreated.js (Updated with Sunset Passion theme)
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
@@ -26,10 +26,7 @@ const RoomCreated = () => {
   }, [navigate]);
 
   const handleStart = () => {
-    if (!name.trim()) {
-      alert('Please enter your name');
-      return;
-    }
+    if (!name.trim()) return;
     localStorage.setItem(`creator-name-${roomId}`, name);
     navigate(`/chat/${roomId}`);
   };
@@ -38,35 +35,34 @@ const RoomCreated = () => {
     navigator.clipboard.writeText(roomId);
   };
 
-  if (loading) return <div className="text-center p-10 text-pink-600 font-bold">Creating room...</div>;
+  if (loading) return <div className="text-center p-10 text-[#f97373] font-bold">Creating room...</div>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#fff1f5] to-[#ffe8ec] px-4 py-10">
-      <div className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
-        <h2 className="text-3xl font-bold text-black mb-2">Chat Room Created</h2>
-        <p className="text-md font-semibold mb-1">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sunset1 to-sunset2 p-4">
+      <div className="bg-white/80 backdrop-blur-lg p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
+        <h2 className="text-3xl font-bold text-textAccent mb-2">Chat Room Created</h2>
+        <p className="text-md font-semibold text-textAccent mb-1">
           Room ID: <span className="font-mono font-bold">{roomId}</span>
         </p>
         <button
           onClick={handleCopy}
-          className="bg-[#f9b5b1] hover:bg-[#f39191] px-4 py-1 rounded-full text-sm font-medium text-black mb-4 shadow"
+          className="bg-btn hover:bg-btnHover px-4 py-1 rounded-full text-sm font-medium text-white mb-4 shadow"
         >
           Copy Room ID
         </button>
-        <p className="text-sm text-black mb-6">Share this code with your partner to join.</p>
+        <p className="text-sm text-textAccent mb-6">Share this code with your partner to join.</p>
 
         <input
           type="text"
-          autoFocus
           placeholder="Enter your name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-3 rounded-full border border-gray-300 text-center mb-4"
+          className="w-full px-4 py-3 rounded-full border border-gray-300 text-center mb-4 text-textAccent"
         />
 
         <button
           onClick={handleStart}
-          className="w-full bg-[#f78da7] hover:bg-[#f26b88] text-white font-semibold py-3 rounded-full shadow"
+          className="w-full bg-btn hover:bg-btnHover text-white font-semibold py-3 rounded-full shadow"
         >
           Start Chatting
         </button>
