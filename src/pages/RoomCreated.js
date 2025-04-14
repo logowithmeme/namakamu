@@ -1,24 +1,17 @@
-// src/pages/RoomCreated.js (Final working version)
+// RoomCreated.js (Simple, always generates room — no state check)
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 
 const RoomCreated = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const [roomId, setRoomId] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const isFromHome = location.state?.fromHome;
-    if (!isFromHome) {
-      navigate('/');
-      return;
-    }
-
     const newRoomId = uuidv4().slice(0, 8);
     setDoc(doc(db, 'rooms', newRoomId), { createdAt: Date.now() })
       .then(() => {
@@ -26,8 +19,11 @@ const RoomCreated = () => {
         setRoomId(newRoomId);
         setLoading(false);
       })
-      .catch(() => navigate('/'));
-  }, [navigate, location]);
+      .catch((error) => {
+        console.error('Error creating room:', error);
+        navigate('/');
+      });
+  }, [navigate]);
 
   const handleStart = () => {
     if (!name.trim()) return;
