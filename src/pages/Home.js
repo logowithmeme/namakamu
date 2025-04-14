@@ -1,4 +1,4 @@
-// src/pages/Home.js (Fix Copy button as styled pink chip 💗)
+// src/pages/Home.js (Final polished Room ID copy button style)
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
@@ -46,11 +46,11 @@ const Home = () => {
         </button>
 
         {roomId && (
-          <div className="text-center text-sm text-[#333] mb-3">
+          <div className="text-center text-sm text-[#333] mb-3 flex items-center justify-center gap-2">
             Room ID: <span className="font-mono font-bold text-black">{roomId}</span>
             <button
               onClick={() => navigator.clipboard.writeText(roomId)}
-              className="ml-2 bg-pink-200 text-[#7a0447] px-3 py-1 rounded-full text-xs font-semibold shadow hover:bg-pink-300 transition"
+              className="px-3 py-1 text-sm font-medium bg-pink-300 hover:bg-pink-400 text-black rounded-full shadow-md transition"
             >
               Copy
             </button>
