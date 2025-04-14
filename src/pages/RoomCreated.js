@@ -1,4 +1,4 @@
-// RoomCreated.js (Final with polish: name check + autoFocus)
+// src/pages/RoomCreated.js
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
@@ -27,7 +27,7 @@ const RoomCreated = () => {
 
   const handleStart = () => {
     if (!name.trim()) {
-      alert("Please enter your name.");
+      alert('Please enter your name');
       return;
     }
     localStorage.setItem(`creator-name-${roomId}`, name);
@@ -41,13 +41,15 @@ const RoomCreated = () => {
   if (loading) return <div className="text-center p-10 text-pink-600 font-bold">Creating room...</div>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#ffdcdc] to-[#ffe8cc] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#fff1f5] to-[#ffe8ec] px-4 py-10">
       <div className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
         <h2 className="text-3xl font-bold text-black mb-2">Chat Room Created</h2>
-        <p className="text-md font-semibold mb-1">Room ID: <span className="font-mono font-bold">{roomId}</span></p>
+        <p className="text-md font-semibold mb-1">
+          Room ID: <span className="font-mono font-bold">{roomId}</span>
+        </p>
         <button
           onClick={handleCopy}
-          className="bg-pink-300 hover:bg-pink-400 px-4 py-1 rounded-full text-sm font-medium text-black mb-4 shadow"
+          className="bg-[#f9b5b1] hover:bg-[#f39191] px-4 py-1 rounded-full text-sm font-medium text-black mb-4 shadow"
         >
           Copy Room ID
         </button>
@@ -64,7 +66,7 @@ const RoomCreated = () => {
 
         <button
           onClick={handleStart}
-          className="w-full bg-pink-400 hover:bg-pink-500 text-white font-semibold py-3 rounded-full shadow"
+          className="w-full bg-[#f78da7] hover:bg-[#f26b88] text-white font-semibold py-3 rounded-full shadow"
         >
           Start Chatting
         </button>
