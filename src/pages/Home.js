@@ -1,4 +1,4 @@
-// src/pages/Home.js (Better styling with modern glow 💖)
+// src/pages/Home.js (💘 Sexy Pink Background + Visible Buttons Fix)
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
@@ -32,50 +32,50 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#FFF0EC] to-[#FFE9D8] p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-center border border-[#fbc8b3]">
-        <div className="text-4xl font-extrabold text-[#ff3366] mb-1">❤️</div>
-        <h1 className="text-4xl font-black mb-2 text-[#2d1a1a] font-serif">Namakamu</h1>
-        <p className="text-[#4B4B4B] text-md mb-6 italic">A secret space for two hearts.</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#FFD9E2] to-[#FFE6EB] p-4">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
+        <div className="text-4xl font-extrabold text-[#e11d48] mb-1">❤️</div>
+        <h1 className="text-4xl font-black mb-2 text-[#1c1b1f] font-serif">Namakamu</h1>
+        <p className="text-[#444] text-md italic mb-6">A secret space for two hearts.</p>
 
         <button
           onClick={generateRoom}
-          className="w-full bg-gradient-to-r from-[#ff4d6d] to-[#ff6e8a] text-white font-semibold text-lg py-3 rounded-full shadow-lg mb-4 hover:brightness-110 transition"
+          className="w-full bg-pink-300 hover:bg-pink-400 text-black font-semibold text-lg py-3 rounded-full shadow-md mb-4 transition"
         >
           Create Room
         </button>
 
         {roomId && (
-          <div className="text-center text-sm text-[#444] mb-3">
-            Room ID: <span className="font-mono font-bold text-[#1f1f1f]">{roomId}</span>
+          <div className="text-center text-sm text-[#333] mb-3">
+            Room ID: <span className="font-mono font-bold text-black">{roomId}</span>
             <button
               onClick={() => navigator.clipboard.writeText(roomId)}
-              className="ml-2 text-[#e11d48] underline text-sm hover:text-[#c3142e]"
+              className="ml-2 text-pink-600 underline text-sm hover:text-pink-800"
             >
               Copy
             </button>
           </div>
         )}
 
-        <div className="bg-[#fff2ea] p-4 rounded-xl shadow-inner mb-4">
+        <div className="bg-[#ffeef2] p-4 rounded-xl shadow-inner mb-4">
           <input
-            className="w-full border border-[#fbc8b3] p-3 text-center rounded-full mb-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#FF4F81]"
+            className="w-full border border-pink-300 p-3 text-center rounded-full mb-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-400"
             placeholder="Enter Room ID"
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value)}
           />
           <button
             onClick={joinRoom}
-            className="w-full bg-gradient-to-r from-[#ff4d6d] to-[#ff6e8a] text-white font-semibold text-lg py-3 rounded-full shadow-md transition hover:brightness-110"
+            className="w-full bg-pink-300 hover:bg-pink-400 text-black font-semibold text-lg py-3 rounded-full shadow-md transition"
           >
             Join Room
           </button>
         </div>
 
         <button
-          className="w-full bg-[#fffdfc] border border-[#f9c56c] py-3 rounded-full shadow-sm mt-4 flex items-center justify-center gap-2 hover:bg-[#fff4ec] transition"
+          className="w-full bg-white border border-yellow-300 py-3 rounded-full shadow-sm mt-4 flex items-center justify-center gap-2 hover:bg-yellow-50 transition"
         >
-          <span className="text-yellow-500 text-lg">🔒</span> <span className="text-[#1a1a1a] font-semibold">Shared memories</span>
+          <span className="text-yellow-500 text-lg">🔒</span> <span className="text-black font-semibold">Shared memories</span>
         </button>
       </div>
     </div>
