@@ -1,4 +1,4 @@
-// src/pages/Home.js (💘 Sexy Pink Background + Visible Buttons Fix)
+// src/pages/Home.js (Fix Copy button as styled pink chip 💗)
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
@@ -50,7 +50,7 @@ const Home = () => {
             Room ID: <span className="font-mono font-bold text-black">{roomId}</span>
             <button
               onClick={() => navigator.clipboard.writeText(roomId)}
-              className="ml-2 text-pink-600 underline text-sm hover:text-pink-800"
+              className="ml-2 bg-pink-200 text-[#7a0447] px-3 py-1 rounded-full text-xs font-semibold shadow hover:bg-pink-300 transition"
             >
               Copy
             </button>
