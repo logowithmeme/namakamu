@@ -1,16 +1,15 @@
-// src/pages/Home.js
+// src/pages/Home.js (updated to remove unneeded state navigation)
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { v4 as uuidv4 } from 'uuid';
+import { doc, getDoc } from 'firebase/firestore';
 
 const Home = () => {
   const navigate = useNavigate();
   const [joinCode, setJoinCode] = useState('');
 
-  const handleCreateRoom = async () => {
-    navigate('/room-created', { state: { fromHome: true } });
+  const handleCreateRoom = () => {
+    navigate('/room-created');
   };
 
   const handleJoinRoom = async () => {

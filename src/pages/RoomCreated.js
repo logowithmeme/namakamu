@@ -1,4 +1,4 @@
-// RoomCreated.js (Simple, always generates room — no state check)
+// RoomCreated.js (Final with polish: name check + autoFocus)
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
@@ -26,7 +26,10 @@ const RoomCreated = () => {
   }, [navigate]);
 
   const handleStart = () => {
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      alert("Please enter your name.");
+      return;
+    }
     localStorage.setItem(`creator-name-${roomId}`, name);
     navigate(`/chat/${roomId}`);
   };
@@ -52,6 +55,7 @@ const RoomCreated = () => {
 
         <input
           type="text"
+          autoFocus
           placeholder="Enter your name"
           value={name}
           onChange={(e) => setName(e.target.value)}

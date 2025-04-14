@@ -1,4 +1,4 @@
-// src/pages/JoinRoomPage.js
+// src/pages/JoinRoomPage.js (with invalid roomId check)
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
@@ -8,6 +8,14 @@ const JoinRoomPage = () => {
   const { roomId } = useParams();
   const [name, setName] = useState('');
   const navigate = useNavigate();
+
+  if (!roomId) {
+    return (
+      <div className="text-center p-10 text-red-500 font-bold">
+        Invalid Room ID. Go back.
+      </div>
+    );
+  }
 
   const handleJoin = async () => {
     if (!name.trim()) return;
