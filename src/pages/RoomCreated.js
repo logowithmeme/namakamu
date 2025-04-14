@@ -1,4 +1,4 @@
-// RoomCreated.js (with guard and latest styles)
+// src/pages/RoomCreated.js (Final working version)
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../firebase';
@@ -6,23 +6,28 @@ import { doc, setDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 
 const RoomCreated = () => {
-  const [roomId, setRoomId] = useState('');
-  const [name, setName] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
+  const [roomId, setRoomId] = useState('');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const allowed = location?.state?.fromHome;
-    if (!allowed) {
+    const isFromHome = location.state?.fromHome;
+    if (!isFromHome) {
       navigate('/');
       return;
     }
 
-    const id = uuidv4().slice(0, 8);
-    setDoc(doc(db, 'rooms', id), { createdAt: Date.now() });
-    localStorage.setItem(`creator-${id}`, Date.now().toString());
-    setRoomId(id);
-  }, [location, navigate]);
+    const newRoomId = uuidv4().slice(0, 8);
+    setDoc(doc(db, 'rooms', newRoomId), { createdAt: Date.now() })
+      .then(() => {
+        localStorage.setItem(`creator-${newRoomId}`, Date.now().toString());
+        setRoomId(newRoomId);
+        setLoading(false);
+      })
+      .catch(() => navigate('/'));
+  }, [navigate, location]);
 
   const handleStart = () => {
     if (!name.trim()) return;
@@ -33,6 +38,8 @@ const RoomCreated = () => {
   const handleCopy = () => {
     navigator.clipboard.writeText(roomId);
   };
+
+  if (loading) return <div className="text-center p-10 text-pink-600 font-bold">Creating room...</div>;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#ffdcdc] to-[#ffe8cc] p-4">
