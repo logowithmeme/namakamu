@@ -5,17 +5,19 @@ import { doc, setDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 
 const RoomCreated = () => {
-  const [roomId, setRoomId] = useState(uuidv4().slice(0, 8)); // generate instantly
+  const [roomId, setRoomId] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     const createRoom = async () => {
-      await setDoc(doc(db, 'chatrooms', roomId), {
+      const newRoomId = uuidv4().slice(0, 8);
+      await setDoc(doc(db, 'chatrooms', newRoomId), {
         createdAt: new Date().toISOString(),
       });
+      setRoomId(newRoomId);
     };
     createRoom();
-  }, [roomId]);
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(roomId);
@@ -30,7 +32,7 @@ const RoomCreated = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-pink-100 via-purple-100 to-yellow-100 px-4">
       <h1 className="text-3xl font-bold text-purple-800 mb-2">Chat Room Created</h1>
       <p className="text-lg mb-4">Room ID:</p>
-      <p className="text-4xl font-bold text-indigo-700 mb-6">{roomId}</p>
+      <p className="text-4xl font-bold text-indigo-700 mb-6">{roomId || 'Generating...'}</p>
       <p className="mb-4 text-center">Share this code with your partner to join.</p>
 
       <div className="flex flex-col gap-4 w-full max-w-xs">

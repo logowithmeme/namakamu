@@ -10,7 +10,7 @@ const JoinRoomPage = () => {
 
   const handleJoin = async () => {
     if (!roomId || !name) {
-      alert('Please enter both Room ID and your name');
+      alert('Please enter Room ID and your name.');
       return;
     }
 
@@ -18,38 +18,37 @@ const JoinRoomPage = () => {
     const roomSnap = await getDoc(roomRef);
 
     if (roomSnap.exists()) {
-      localStorage.setItem('userName', name);
-      localStorage.setItem('userType', 'joiner');
+      localStorage.setItem(`name-${roomId}`, name);
       navigate(`/chat/${roomId}`);
     } else {
-      alert('Room not found. Please check the Room ID.');
+      alert('Room Not Found! Check the ID and try again.');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-100 via-pink-100 to-purple-100 px-4">
-      <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md text-center">
-        <h2 className="text-2xl font-bold text-purple-700 mb-4">Join a Chat Room</h2>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-100 via-yellow-100 to-pink-100 px-4">
+      <h1 className="text-3xl font-bold text-orange-700 mb-6">Join a Chat Room</h1>
 
+      <div className="flex flex-col gap-4 w-full max-w-xs">
         <input
           type="text"
+          placeholder="Enter Room ID"
+          className="px-4 py-2 rounded-full border border-orange-300 focus:outline-none"
           value={roomId}
           onChange={(e) => setRoomId(e.target.value)}
-          placeholder="Enter Room ID"
-          className="w-full px-4 py-3 rounded-md border border-purple-200 mb-4 focus:outline-none focus:ring-2 focus:ring-purple-400"
         />
 
         <input
           type="text"
+          placeholder="Enter Your Name"
+          className="px-4 py-2 rounded-full border border-orange-300 focus:outline-none"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Enter Your Name"
-          className="w-full px-4 py-3 rounded-md border border-purple-200 mb-6 focus:outline-none focus:ring-2 focus:ring-purple-400"
         />
 
         <button
           onClick={handleJoin}
-          className="bg-purple-500 text-white w-full py-3 rounded-full hover:bg-purple-600 transition"
+          className="bg-orange-400 hover:bg-orange-500 text-white py-3 rounded-full shadow-lg transition"
         >
           Join Room
         </button>
