@@ -1,85 +1,71 @@
-// src/pages/Home.js (Final polished Room ID copy button style)
-import React, { useState } from 'react';
+// src/pages/RoomCreated.js (Styled Copy Button Like Image Ref)
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
 
-const Home = () => {
+const RoomCreated = () => {
+  const [roomId, setRoomId] = useState('');
+  const [name, setName] = useState('');
   const navigate = useNavigate();
-  const [joinCode, setJoinCode] = useState('');
-  const [roomId, setRoomId] = useState(null);
 
-  const generateRoom = async () => {
-    const newRoomId = Math.random().toString(36).substring(2, 10);
-    await setDoc(doc(db, 'rooms', newRoomId), { createdAt: Date.now() });
-    localStorage.setItem(`creator-${newRoomId}`, Date.now().toString());
-    setRoomId(newRoomId);
+  useEffect(() => {
+    const generateRoom = async () => {
+      const newRoomId = uuidv4().slice(0, 8);
+      await setDoc(doc(db, 'rooms', newRoomId), {
+        createdAt: new Date().toISOString(),
+      });
+      setRoomId(newRoomId);
+    };
+    generateRoom();
+  }, []);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(roomId);
   };
 
-  const enterRoom = () => {
-    if (!roomId) return;
-    navigate(`/chat/${roomId}`);
-  };
-
-  const joinRoom = async () => {
-    const ref = doc(db, 'rooms', joinCode);
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      navigate(`/chat/${joinCode}`);
-    } else {
-      alert('Room not found');
+  const startChat = () => {
+    if (name.trim() !== '') {
+      localStorage.setItem(`creator-${roomId}`, Date.now().toString());
+      localStorage.setItem(`creator-name-${roomId}`, name);
+      navigate(`/chat/${roomId}`);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#FFD9E2] to-[#FFE6EB] p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
-        <div className="text-4xl font-extrabold text-[#e11d48] mb-1">❤️</div>
-        <h1 className="text-4xl font-black mb-2 text-[#1c1b1f] font-serif">Namakamu</h1>
-        <p className="text-[#444] text-md italic mb-6">A secret space for two hearts.</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#ffecd2] to-[#fcb69f] p-4">
+      <div className="bg-white/60 backdrop-blur-md p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
+        <h1 className="text-3xl font-extrabold text-black mb-2">Chat Room Created</h1>
+        <p className="text-lg font-bold text-black mb-2">
+          Room ID: <span className="font-mono text-black">{roomId}</span>
+        </p>
+        <p className="text-black mb-6">Share this code with your partner to join.</p>
+
+        <input
+          type="text"
+          placeholder="Enter your name"
+          className="w-full px-4 py-3 rounded-xl border border-gray-300 mb-4 text-center focus:outline-none focus:ring-2 focus:ring-pink-400"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
         <button
-          onClick={generateRoom}
-          className="w-full bg-pink-300 hover:bg-pink-400 text-black font-semibold text-lg py-3 rounded-full shadow-md mb-4 transition"
+          onClick={handleCopy}
+          className="w-full bg-[#ffe0e9] hover:bg-[#ffcad9] text-black font-semibold py-3 rounded-full shadow mb-3 transition"
         >
-          Create Room
+          Copy Room ID
         </button>
 
-        {roomId && (
-          <div className="text-center text-sm text-[#333] mb-3 flex items-center justify-center gap-2">
-            Room ID: <span className="font-mono font-bold text-black">{roomId}</span>
-            <button
-              onClick={() => navigator.clipboard.writeText(roomId)}
-              className="px-3 py-1 text-sm font-medium bg-pink-300 hover:bg-pink-400 text-black rounded-full shadow-md transition"
-            >
-              Copy
-            </button>
-          </div>
-        )}
-
-        <div className="bg-[#ffeef2] p-4 rounded-xl shadow-inner mb-4">
-          <input
-            className="w-full border border-pink-300 p-3 text-center rounded-full mb-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-400"
-            placeholder="Enter Room ID"
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value)}
-          />
-          <button
-            onClick={joinRoom}
-            className="w-full bg-pink-300 hover:bg-pink-400 text-black font-semibold text-lg py-3 rounded-full shadow-md transition"
-          >
-            Join Room
-          </button>
-        </div>
-
         <button
-          className="w-full bg-white border border-yellow-300 py-3 rounded-full shadow-sm mt-4 flex items-center justify-center gap-2 hover:bg-yellow-50 transition"
+          onClick={startChat}
+          className="w-full bg-[#ffd7c2] hover:bg-[#ffc9a4] text-black font-semibold py-3 rounded-full shadow transition"
         >
-          <span className="text-yellow-500 text-lg">🔒</span> <span className="text-black font-semibold">Shared memories</span>
+          Start Chatting
         </button>
       </div>
     </div>
   );
 };
 
-export default Home;
+export default RoomCreated;
