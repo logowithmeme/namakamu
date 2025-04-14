@@ -7,6 +7,7 @@ import { doc, setDoc } from 'firebase/firestore';
 const Home = () => {
   const navigate = useNavigate();
   const [roomId, setRoomId] = useState('');
+  const [joinCode, setJoinCode] = useState('');
 
   const createRoom = async () => {
     const newId = Math.random().toString(36).substring(2, 10);
@@ -15,7 +16,6 @@ const Home = () => {
     navigate(`/room-created/${newId}`);
   };
 
-  const [joinCode, setJoinCode] = useState('');
   const joinRoom = () => {
     if (joinCode.trim()) {
       navigate(`/join-room/${joinCode.trim()}`);
@@ -31,22 +31,14 @@ const Home = () => {
 
         <button
           onClick={createRoom}
-          className="bg-[#E4685D] text-white text-lg font-semibold py-3 px-6 rounded-full w-full mb-4 shadow-md hover:brightness-110 transition"
+          className="bg-[#E4685D] hover:bg-[#E1504A] text-white text-lg font-semibold py-3 px-6 rounded-full w-full mb-4 shadow-md transition"
         >
           Create Room
         </button>
 
-        <button
-          onClick={() => document.getElementById('join-box').scrollIntoView({ behavior: 'smooth' })}
-          className="bg-[#F88F6F] text-white text-lg font-semibold py-3 px-6 rounded-full w-full mb-4 shadow-md hover:brightness-110 transition"
-        >
-          Join Room
-        </button>
+        {/* ❌ Removed the duplicate Join Room button here */}
 
-        <div
-          id="join-box"
-          className="bg-[#FFF7F0] rounded-2xl p-6 mt-4 shadow-inner"
-        >
+        <div className="bg-[#FFF7F0] rounded-2xl p-6 mt-4 shadow-inner">
           <input
             placeholder="Enter Room ID"
             value={joinCode}
@@ -55,7 +47,7 @@ const Home = () => {
           />
           <button
             onClick={joinRoom}
-            className="bg-[#E4685D] text-white font-semibold py-3 px-6 rounded-full w-full shadow hover:brightness-110"
+            className="bg-[#E4685D] hover:bg-[#E1504A] text-white font-semibold py-3 px-6 rounded-full w-full shadow transition"
           >
             Join Room
           </button>

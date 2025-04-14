@@ -1,4 +1,3 @@
-// src/pages/ChatPage.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
@@ -25,10 +24,10 @@ const ChatPage = () => {
 
     if (creator) {
       setCreatorId(creator);
-      setUsername('💚');
+      setUsername(creator);
     } else if (joiner) {
       setCreatorId('joiner');
-      setUsername('💙');
+      setUsername(joiner);
     }
 
     const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
@@ -45,13 +44,23 @@ const ChatPage = () => {
 
   const sendMessage = async () => {
     if (message.trim() === '') return;
-    await addDoc(collection(db, 'rooms', roomId, 'messages'), {
-      text: message,
-      timestamp: serverTimestamp(),
-      sender: creatorId,
-      name: username,
-    });
-    setMessage('');
+
+    if (!creatorId || !username) {
+      alert("Something went wrong. Please refresh and try again.");
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'rooms', roomId, 'messages'), {
+        text: message,
+        timestamp: serverTimestamp(),
+        sender: creatorId,
+        name: username,
+      });
+      setMessage('');
+    } catch (err) {
+      console.error("Send error:", err);
+    }
   };
 
   return (
@@ -60,6 +69,7 @@ const ChatPage = () => {
         <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">
           Chat Room: {roomId}
         </div>
+
         <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
           {messages.map((msg, index) => (
             <div
@@ -68,18 +78,19 @@ const ChatPage = () => {
             >
               <div
                 className={`px-4 py-2 rounded-2xl max-w-[70%] text-black text-base shadow-md
-                  whitespace-pre-wrap break-words ${
-                    msg.sender === creatorId
-                      ? 'bg-green-100 rounded-br-none'
-                      : 'bg-blue-100 rounded-bl-none'
-                  }`}
+                whitespace-pre-wrap break-words ${
+                  msg.sender === creatorId
+                    ? 'bg-green-100 rounded-br-none'
+                    : 'bg-blue-100 rounded-bl-none'
+                }`}
               >
-                {msg.text} {msg.name}
+                <span className="font-semibold">{msg.name}:</span> {msg.text}
               </div>
             </div>
           ))}
           <div ref={chatEndRef} />
         </div>
+
         <div className="p-4 border-t flex items-center gap-2">
           <input
             type="text"
@@ -91,7 +102,7 @@ const ChatPage = () => {
           />
           <button
             onClick={sendMessage}
-            className="bg-[#FF867C] hover:bg-pink-500 text-white px-4 py-2 rounded-full transition"
+            className="bg-[#FF4F81] hover:bg-[#ff2f6e] text-white px-4 py-2 rounded-full shadow-md transition"
           >
             Send
           </button>
