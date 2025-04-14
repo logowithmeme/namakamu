@@ -1,4 +1,4 @@
-// src/pages/RoomCreated.js
+// RoomCreated.js (with guard and latest styles)
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../firebase';
