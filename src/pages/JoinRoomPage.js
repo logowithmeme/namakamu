@@ -1,3 +1,4 @@
+// src/pages/JoinRoomPage.js
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
@@ -48,8 +49,8 @@ const JoinRoomPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sunset1 to-sunset2 p-4">
       <div className="bg-white/70 backdrop-blur-lg p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
-        <h2 className="text-3xl font-bold text-[#3f1d1d] mb-2 font-playfair">Join Chat Room</h2>
-        <p className="text-md text-[#3f1d1d] font-semibold mb-6">
+        <div className="text-3xl font-bold text-textAccent mb-2">Join Chat Room</div>
+        <p className="text-md text-textAccent font-semibold mb-6">
           Room ID: <span className="font-mono font-bold">{roomId}</span>
         </p>
 
@@ -63,7 +64,7 @@ const JoinRoomPage = () => {
 
         <button
           onClick={handleJoin}
-          className="w-full bg-[#f97373] hover:bg-[#ef4444] text-white font-semibold py-3 rounded-full shadow transition"
+          className="w-full bg-btn hover:bg-btnHover text-white font-semibold py-3 rounded-full shadow transition"
         >
           Join Now
         </button>
