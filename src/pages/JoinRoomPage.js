@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 
 const JoinRoomPage = () => {
   const { roomId } = useParams();
@@ -11,6 +11,29 @@ const JoinRoomPage = () => {
 
   const handleJoin = async () => {
     if (!name.trim()) return;
+
+    const roomRef = doc(db, 'rooms', roomId);
+    const roomSnap = await getDoc(roomRef);
+
+    if (!roomSnap.exists()) {
+      alert('Room not found 😢');
+      return;
+    }
+
+    const messagesRef = collection(db, 'rooms', roomId, 'messages');
+    const messagesSnap = await getDocs(messagesRef);
+
+    const uniqueSenders = new Set();
+    messagesSnap.forEach((doc) => {
+      const data = doc.data();
+      if (data.sender) uniqueSenders.add(data.sender);
+    });
+
+    if (uniqueSenders.size >= 2 && !localStorage.getItem(`joiner-name-${roomId}`)) {
+      alert('This room is already full 👥');
+      return;
+    }
+
     localStorage.setItem(`joiner-name-${roomId}`, name);
     navigate(`/chat/${roomId}`);
   };
