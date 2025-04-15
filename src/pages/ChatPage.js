@@ -17,6 +17,7 @@ const ChatPage = () => {
   const [messages, setMessages] = useState([]);
   const [senderId, setSenderId] = useState('');
   const [username, setUsername] = useState('');
+  const [angerMode, setAngerMode] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -60,10 +61,24 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100 px-4 py-10">
+    <div className={`min-h-screen px-4 py-10 transition-all duration-500 ${angerMode
+      ? 'bg-gradient-to-br from-red-500 via-red-700 to-red-900'
+      : 'bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100'}`}>
+
       <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
-        <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900">
-          Chat Room: {roomId}
+        <div className="flex items-center justify-between bg-pink-200 px-6 py-4">
+          <h2 className="text-2xl font-semibold text-pink-900">
+            Chat Room: {roomId}
+          </h2>
+
+          {/* Anger Mode Toggle */}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="text-sm font-semibold text-pink-900">Anger</span>
+            <input type="checkbox" className="sr-only" onChange={() => setAngerMode(!angerMode)} />
+            <div className={`w-10 h-5 rounded-full ${angerMode ? 'bg-red-600' : 'bg-gray-300'} relative transition`}>
+              <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${angerMode ? 'left-5 -translate-x-full' : 'left-0.5'}`} />
+            </div>
+          </label>
         </div>
 
         <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
@@ -74,11 +89,10 @@ const ChatPage = () => {
             >
               <div
                 className={`px-4 py-2 rounded-2xl max-w-[70%] text-black text-base shadow-md
-                whitespace-pre-wrap break-words ${
-                  msg.sender === senderId
+                whitespace-pre-wrap break-words ${msg.sender === senderId
                     ? 'bg-green-100 rounded-br-none'
                     : 'bg-blue-100 rounded-bl-none'
-                }`}
+                  }`}
               >
                 <span className="font-semibold">{msg.name}:</span> {msg.text}
               </div>
@@ -98,7 +112,7 @@ const ChatPage = () => {
           />
           <button
             onClick={sendMessage}
-            className="bg-pink-300 hover:bg-pink-400 text-white font-semibold px-6 py-2 rounded-full shadow-md transition text-sm"
+            className="bg-pink-400 hover:bg-pink-500 text-white font-semibold px-6 py-2 rounded-full shadow-md transition text-sm"
           >
             Send
           </button>
