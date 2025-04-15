@@ -1,4 +1,4 @@
-// ✅ src/pages/Home.js
+// src/pages/Home.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
@@ -14,11 +14,12 @@ const Home = () => {
 
   const handleJoinRoom = async () => {
     if (joinCode.trim() === '') return;
-    const ref = doc(db, 'rooms', joinCode.trim());
+
+    const ref = doc(db, 'rooms', joinCode);
     const snap = await getDoc(ref);
 
     if (snap.exists()) {
-      navigate(`/join-room/${joinCode.trim()}`);
+      navigate(`/join-room/${joinCode}`);
     } else {
       alert('Room not found 😢');
     }
@@ -27,8 +28,19 @@ const Home = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sunset1 to-sunset2 p-4">
       <div className="bg-white/60 backdrop-blur-md p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
-        <div className="text-4xl font-bold text-textAccent mb-2 font-playfair">Namakamu</div>
-        <p className="text-md text-textAccent mb-6">A secret space for two hearts.</p>
+        <div className="text-center">
+          <img
+            src="/namakamu-logo.png"
+            alt="Namakamu Logo"
+            className="w-32 h-32 mx-auto mb-4"
+          />
+          <h1 className="text-5xl font-bold text-textAccent mb-2 font-playfair">
+            Namakamu
+          </h1>
+          <p className="text-md text-textAccent mb-6">
+            A secret space for two hearts.
+          </p>
+        </div>
 
         <button
           onClick={handleCreateRoom}
