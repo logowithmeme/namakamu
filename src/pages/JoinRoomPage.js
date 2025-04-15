@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 const JoinRoomPage = () => {
   const { roomId } = useParams();
@@ -20,16 +20,15 @@ const JoinRoomPage = () => {
       return;
     }
 
-    const messagesRef = collection(db, 'rooms', roomId, 'messages');
-    const messagesSnap = await getDocs(messagesRef);
+    const creatorName = localStorage.getItem(`creator-name-${roomId}`);
+    const joinerName = localStorage.getItem(`joiner-name-${roomId}`);
 
-    const uniqueSenders = new Set();
-    messagesSnap.forEach((doc) => {
-      const data = doc.data();
-      if (data.sender) uniqueSenders.add(data.sender);
-    });
+    const alreadyJoined = !!joinerName;
+    const alreadyCreated = !!creatorName;
 
-    if (uniqueSenders.size >= 2 && !localStorage.getItem(`joiner-name-${roomId}`)) {
+    const totalParticipants = (alreadyCreated ? 1 : 0) + (alreadyJoined ? 1 : 0);
+
+    if (totalParticipants >= 2 && !joinerName) {
       alert('This room is already full 👥');
       return;
     }
