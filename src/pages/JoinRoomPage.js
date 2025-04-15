@@ -1,34 +1,38 @@
 // src/pages/JoinRoomPage.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 
 const JoinRoomPage = () => {
   const { roomId } = useParams();
   const [name, setName] = useState('');
+  const [roomExists, setRoomExists] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkRoom = async () => {
+      if (!roomId) return;
+      const roomRef = doc(db, 'rooms', roomId);
+      const snap = await getDoc(roomRef);
+      setRoomExists(snap.exists());
+    };
+    checkRoom();
+  }, [roomId]);
 
   const handleJoin = async () => {
     if (!name.trim()) return;
 
-    const roomRef = doc(db, 'rooms', roomId);
-    const roomSnap = await getDoc(roomRef);
+    const messagesRef = collection(db, 'rooms', roomId, 'messages');
+    const messagesSnap = await getDocs(messagesRef);
 
-    if (!roomSnap.exists()) {
-      alert('Room not found 😢');
-      return;
-    }
+    const uniqueSenders = new Set();
+    messagesSnap.forEach((doc) => {
+      const data = doc.data();
+      if (data.sender) uniqueSenders.add(data.sender);
+    });
 
-    const creatorName = localStorage.getItem(`creator-name-${roomId}`);
-    const joinerName = localStorage.getItem(`joiner-name-${roomId}`);
-
-    const alreadyJoined = !!joinerName;
-    const alreadyCreated = !!creatorName;
-
-    const totalParticipants = (alreadyCreated ? 1 : 0) + (alreadyJoined ? 1 : 0);
-
-    if (totalParticipants >= 2 && !joinerName) {
+    if (uniqueSenders.size >= 2 && !localStorage.getItem(`joiner-name-${roomId}`)) {
       alert('This room is already full 👥');
       return;
     }
@@ -37,7 +41,7 @@ const JoinRoomPage = () => {
     navigate(`/chat/${roomId}`);
   };
 
-  if (!roomId) {
+  if (!roomId || !roomExists) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-red-100">
         <div className="text-red-600 font-semibold text-lg">Invalid Room ID. Go back.</div>

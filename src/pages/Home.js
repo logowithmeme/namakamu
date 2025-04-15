@@ -1,4 +1,4 @@
-// src/pages/Home.js
+// ✅ src/pages/Home.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
@@ -14,12 +14,11 @@ const Home = () => {
 
   const handleJoinRoom = async () => {
     if (joinCode.trim() === '') return;
-
-    const ref = doc(db, 'rooms', joinCode);
+    const ref = doc(db, 'rooms', joinCode.trim());
     const snap = await getDoc(ref);
 
     if (snap.exists()) {
-      navigate(`/join-room/${joinCode}`);
+      navigate(`/join-room/${joinCode.trim()}`);
     } else {
       alert('Room not found 😢');
     }
