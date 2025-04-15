@@ -15,6 +15,9 @@ module.exports = {
       backgroundImage: {
         'sunset-gradient': "linear-gradient(to bottom, #ffecd2, #fcb69f)",
       },
+      fontFamily: {
+        playfair: ['"Playfair Display"', 'serif'],
+      },
     },
   },
   plugins: [],

@@ -13,7 +13,7 @@ const Home = () => {
   };
 
   const handleJoinRoom = async () => {
-    if (!joinCode.trim()) return;
+    if (joinCode.trim() === '') return;
     const ref = doc(db, 'rooms', joinCode);
     const snap = await getDoc(ref);
     if (snap.exists()) {
@@ -24,9 +24,9 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-sunset-gradient flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sunset1 to-sunset2 p-4">
       <div className="bg-white/60 backdrop-blur-md p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
-        <div className="text-4xl font-bold text-textAccent mb-2">Namakamu</div>
+        <div className="text-4xl font-playfair font-bold text-textAccent mb-2">Namakamu</div>
         <p className="text-md text-textAccent mb-6">A secret space for two hearts.</p>
 
         <button
@@ -51,9 +51,14 @@ const Home = () => {
           </button>
         </div>
 
-        <button className="w-full border mt-6 border-yellow-500 text-textAccent font-semibold py-2 rounded-full shadow flex items-center justify-center gap-2">
-          <span role="img" aria-label="lock">🔒</span> Shared memories
-        </button>
+        <div className="mt-6">
+          <button
+            onClick={() => navigate('/about')}
+            className="w-32 mx-auto bg-btn hover:bg-btnHover text-white font-semibold py-2 rounded-full shadow transition text-sm"
+          >
+            About
+          </button>
+        </div>
       </div>
     </div>
   );
