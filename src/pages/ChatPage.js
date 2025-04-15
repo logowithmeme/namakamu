@@ -9,6 +9,9 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  doc,
+  updateDoc,
+  getDoc,
 } from 'firebase/firestore';
 
 const ChatPage = () => {
@@ -17,7 +20,7 @@ const ChatPage = () => {
   const [messages, setMessages] = useState([]);
   const [senderId, setSenderId] = useState('');
   const [username, setUsername] = useState('');
-  const [angerMode, setAngerMode] = useState(false);
+  const [isAngry, setIsAngry] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -33,11 +36,20 @@ const ChatPage = () => {
     }
 
     const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('timestamp'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeMessages = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map((doc) => doc.data()));
     });
 
-    return () => unsubscribe();
+    const roomRef = doc(db, 'rooms', roomId);
+    const unsubscribeRoom = onSnapshot(roomRef, (docSnap) => {
+      const data = docSnap.data();
+      setIsAngry(data?.angerMode || false);
+    });
+
+    return () => {
+      unsubscribeMessages();
+      unsubscribeRoom();
+    };
   }, [roomId]);
 
   useEffect(() => {
@@ -60,25 +72,43 @@ const ChatPage = () => {
     }
   };
 
+  const toggleAngerMode = async () => {
+    const roomRef = doc(db, 'rooms', roomId);
+    try {
+      await updateDoc(roomRef, {
+        angerMode: !isAngry,
+      });
+    } catch (err) {
+      console.error('Toggle anger mode error:', err);
+    }
+  };
+
   return (
-    <div className={`min-h-screen px-4 py-10 transition-all duration-500 ${angerMode
-      ? 'bg-gradient-to-br from-red-500 via-red-700 to-red-900'
-      : 'bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100'}`}>
-
+    <div
+      className={`min-h-screen px-4 py-10 transition-all duration-500 ${
+        isAngry ? 'bg-red-200' : 'bg-gradient-to-br from-pink-100 via-purple-100 to-orange-100'
+      }`}
+    >
       <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between bg-pink-200 px-6 py-4">
-          <h2 className="text-2xl font-semibold text-pink-900">
-            Chat Room: {roomId}
-          </h2>
-
-          {/* Anger Mode Toggle */}
-          <label className="flex items-center gap-2 cursor-pointer">
-            <span className="text-sm font-semibold text-pink-900">Anger</span>
-            <input type="checkbox" className="sr-only" onChange={() => setAngerMode(!angerMode)} />
-            <div className={`w-10 h-5 rounded-full ${angerMode ? 'bg-red-600' : 'bg-gray-300'} relative transition`}>
-              <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${angerMode ? 'left-5 -translate-x-full' : 'left-0.5'}`} />
-            </div>
-          </label>
+        <div className="bg-pink-200 text-center py-4 text-2xl font-semibold text-pink-900 flex justify-between items-center px-4">
+          <span>Chat Room: {roomId}</span>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center cursor-pointer">
+              <span className="text-sm text-pink-800 font-bold mr-2">Anger Mode</span>
+              <input type="checkbox" checked={isAngry} onChange={toggleAngerMode} className="hidden" />
+              <div
+                className={`w-10 h-5 flex items-center rounded-full p-1 duration-300 ease-in-out ${
+                  isAngry ? 'bg-red-500' : 'bg-gray-300'
+                }`}
+              >
+                <div
+                  className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${
+                    isAngry ? 'translate-x-5' : ''
+                  }`}
+                ></div>
+              </div>
+            </label>
+          </div>
         </div>
 
         <div className="px-4 py-6 h-[60vh] overflow-y-auto space-y-4">
@@ -89,10 +119,11 @@ const ChatPage = () => {
             >
               <div
                 className={`px-4 py-2 rounded-2xl max-w-[70%] text-black text-base shadow-md
-                whitespace-pre-wrap break-words ${msg.sender === senderId
+                whitespace-pre-wrap break-words ${
+                  msg.sender === senderId
                     ? 'bg-green-100 rounded-br-none'
                     : 'bg-blue-100 rounded-bl-none'
-                  }`}
+                }`}
               >
                 <span className="font-semibold">{msg.name}:</span> {msg.text}
               </div>
@@ -112,7 +143,7 @@ const ChatPage = () => {
           />
           <button
             onClick={sendMessage}
-            className="bg-pink-400 hover:bg-pink-500 text-white font-semibold px-6 py-2 rounded-full shadow-md transition text-sm"
+            className="bg-pink-400 hover:bg-pink-600 text-white font-semibold px-6 py-2 rounded-full shadow-md transition text-sm"
           >
             Send
           </button>
