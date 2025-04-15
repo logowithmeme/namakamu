@@ -98,7 +98,7 @@ const ChatPage = () => {
           />
           <button
             onClick={sendMessage}
-            className="bg-[#FF4F81] hover:bg-[#ff2f6e] text-white px-4 py-2 rounded-full shadow-md transition"
+            className="bg-pink-300 hover:bg-pink-400 text-white font-semibold px-6 py-2 rounded-full shadow-md transition text-sm"
           >
             Send
           </button>
